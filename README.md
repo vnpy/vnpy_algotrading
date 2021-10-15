@@ -13,11 +13,11 @@
 
 ## 说明
 
-提供多种常用的智能交易算法：TWAP、Sniper、Iceberg、BestLimit等，支持对接外部智能算法交易服务（如金纳算法）
+提供多种常用的智能交易算法：TWAP、Sniper、Iceberg、BestLimit等
 
 ## 安装
 
-安装需要基于2.6.0版本以上的[VN Studio](https://www.vnpy.com)。
+安装需要基于2.7.0版本以上的[VN Studio](https://www.vnpy.com)。
 
 直接使用pip命令：
 
