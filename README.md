@@ -13,7 +13,7 @@
 
 ## 说明
 
-提供多种常用的智能交易算法：TWAP、Sniper、Iceberg、BestLimit等
+AlgoTrading是用于算法交易执行的功能模块，提供多种常用的智能交易算法：TWAP、Sniper、Iceberg、BestLimit等，支持通过UI界面、CSV批量导入、外部模块访问等多种调用方式。
 
 ## 安装
 
@@ -29,35 +29,4 @@ pip install vnpy_algotrading
 
 ```
 python setup.py install
-```
-
-## 使用
-
-以脚本方式启动（script/run.py）：
-
-```
-from vnpy.event import EventEngine
-from vnpy.trader.engine import MainEngine
-from vnpy.trader.ui import MainWindow, create_qapp
-
-from vnpy_algotrading import AlgoTradingApp
-
-
-def main():
-    """主入口函数"""
-    qapp = create_qapp()
-
-    event_engine = EventEngine()
-    main_engine = MainEngine(event_engine)
-    main_engine.add_app(AlgoTradingApp)
-
-    main_window = MainWindow(main_engine, event_engine)
-    main_window.showMaximized()
-
-    qapp.exec()
-
-
-if __name__ == "__main__":
-    main()
-
 ```
