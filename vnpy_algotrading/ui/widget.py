@@ -26,7 +26,7 @@ class AlgoWidget(QtWidgets.QWidget):
         self,
         algo_engine: AlgoEngine,
         algo_template: AlgoTemplate
-    ):
+    ) -> None:
         """"""
         super().__init__()
 
@@ -353,7 +353,7 @@ class SettingMonitor(QtWidgets.QTableWidget):
     setting_signal: QtCore.pyqtSignal = QtCore.pyqtSignal(Event)
     use_signal: QtCore.pyqtSignal = QtCore.pyqtSignal(dict)
 
-    def __init__(self, algo_engine: AlgoEngine, event_engine: EventEngine):
+    def __init__(self, algo_engine: AlgoEngine, event_engine: EventEngine) -> None:
         """"""
         super().__init__()
 
@@ -462,7 +462,7 @@ class LogMonitor(QtWidgets.QTableWidget):
     """"""
     signal: QtCore.pyqtSignal = QtCore.pyqtSignal(Event)
 
-    def __init__(self, event_engine: EventEngine):
+    def __init__(self, event_engine: EventEngine) -> None:
         """"""
         super().__init__()
 
@@ -515,7 +515,7 @@ class LogMonitor(QtWidgets.QTableWidget):
 class AlgoManager(QtWidgets.QWidget):
     """"""
 
-    def __init__(self, main_engine: MainEngine, event_engine: EventEngine):
+    def __init__(self, main_engine: MainEngine, event_engine: EventEngine) -> None:
         """"""
         super().__init__()
 
@@ -626,7 +626,7 @@ def to_text(data: dict) -> str:
     """将字典数据转化为字符串数据"""
     buf: list = []
     for key, value in data.items():
-        key = NAME_DISPLAY_MAP.get(key, key)
+        key: str = NAME_DISPLAY_MAP.get(key, key)
         buf.append(f"{key}：{value}")
-    text = "，".join(buf)
+    text: str = "，".join(buf)
     return text

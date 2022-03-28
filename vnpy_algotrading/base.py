@@ -1,6 +1,6 @@
-EVENT_ALGO_LOG = "eAlgoLog"
-EVENT_ALGO_SETTING = "eAlgoSetting"
-EVENT_ALGO_VARIABLES = "eAlgoVariables"
-EVENT_ALGO_PARAMETERS = "eAlgoParameters"
+EVENT_ALGO_LOG: str = "eAlgoLog"
+EVENT_ALGO_SETTING: str = "eAlgoSetting"
+EVENT_ALGO_VARIABLES: str = "eAlgoVariables"
+EVENT_ALGO_PARAMETERS: str = "eAlgoParameters"
 
-APP_NAME = "AlgoTrading"
+APP_NAME: str = "AlgoTrading"

@@ -1,4 +1,4 @@
-NAME_DISPLAY_MAP = {
+NAME_DISPLAY_MAP: dict = {
     "vt_symbol": "本地代码",
     "direction": "方向",
     "price": "价格",
