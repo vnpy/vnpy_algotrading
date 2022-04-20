@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import Any, Dict, Optional
 
 from vnpy.event import EventEngine, Event
-from vnpy.trader.engine import MainEngine
+from vnpy.trader.engine import MainEngine, LogData
 from vnpy.trader.ui import QtWidgets, QtCore
 
 from ..engine import (
@@ -305,7 +305,7 @@ class AlgoMonitor(QtWidgets.QTableWidget):
 
     def get_algo_cells(self, algo_name: str) -> dict:
         """"""
-        cells: dict = self.algo_cells.get(algo_name, None)
+        cells: Optional[dict] = self.algo_cells.get(algo_name, None)
 
         if not cells:
             stop_func = partial(self.stop_algo, algo_name=algo_name)
@@ -500,8 +500,8 @@ class LogMonitor(QtWidgets.QTableWidget):
 
     def process_log_event(self, event: Event) -> None:
         """"""
-        log: Any = event.data
-        msg = log.msg
+        log: LogData = event.data
+        msg: str = log.msg
         timestamp: str = datetime.now().strftime("%H:%M:%S")
 
         timestamp_cell: QtWidgets.QTableWidgetItem = QtWidgets.QTableWidgetItem(timestamp)

@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Dict, List, Optional, Set
 
 from vnpy.event import EventEngine, Event
 from vnpy.trader.engine import BaseEngine, MainEngine
@@ -39,8 +39,8 @@ class AlgoEngine(BaseEngine):
         """构造函数"""
         super().__init__(main_engine, event_engine, APP_NAME)
 
-        self.algos: dict = {}
-        self.symbol_algo_map: dict = {}
+        self.algos: Dict[str, AlgoTemplate] = {}
+        self.symbol_algo_map: Dict[str, Set[AlgoTemplate]] = {}
         self.orderid_algo_map: dict = {}
 
         self.algo_templates: dict = {}
@@ -102,7 +102,7 @@ class AlgoEngine(BaseEngine):
         """"""
         tick: TickData = event.data
 
-        algos: set = self.symbol_algo_map.get(tick.vt_symbol, None)
+        algos: Optional[Set[AlgoTemplate]] = self.symbol_algo_map.get(tick.vt_symbol, None)
         if algos:
             for algo in algos:
                 algo.update_tick(tick)
@@ -110,7 +110,7 @@ class AlgoEngine(BaseEngine):
     def process_timer_event(self, event: Event) -> None:
         """"""
         # 生成列表避免字典改变
-        algos: list = list(self.algos.values())
+        algos: List[AlgoTemplate] = list(self.algos.values())
 
         for algo in algos:
             algo.update_timer()

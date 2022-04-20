@@ -1,13 +1,13 @@
-from typing import Dict
+from typing import Dict, Optional
+
 from vnpy.trader.engine import BaseEngine
-from vnpy.trader.object import TickData, OrderData, TradeData
+from vnpy.trader.object import TickData, OrderData, TradeData, ContractData
 from vnpy.trader.constant import OrderType, Offset, Direction
 from vnpy.trader.utility import virtual
 
 
 class AlgoTemplate:
     """"""
-
     _count: int = 0
     display_name: str = ""
     default_setting: dict = {}
@@ -33,7 +33,7 @@ class AlgoTemplate:
         """创建一个新的算法实例"""
         cls._count += 1
         algo_name: str = f"{cls.__name__}_{cls._count}"
-        algo = cls(algo_engine, algo_name, setting)
+        algo: AlgoTemplate = cls(algo_engine, algo_name, setting)
         return algo
 
     def update_tick(self, tick: TickData) -> None:
@@ -169,11 +169,11 @@ class AlgoTemplate:
         for vt_orderid in self.active_orders.keys():
             self.cancel_order(vt_orderid)
 
-    def get_tick(self, vt_symbol: str) -> None:
+    def get_tick(self, vt_symbol: str) -> Optional[TickData]:
         """"""
         return self.algo_engine.get_tick(self, vt_symbol)
 
-    def get_contract(self, vt_symbol: str) -> None:
+    def get_contract(self, vt_symbol: str) -> Optional[ContractData]:
         """"""
         return self.algo_engine.get_contract(self, vt_symbol)
 
