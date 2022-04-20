@@ -39,10 +39,10 @@ except importlib_metadata.PackageNotFoundError:
 class AlgoTradingApp(BaseApp):
     """"""
 
-    app_name = APP_NAME
-    app_module = __module__
-    app_path = Path(__file__).parent
-    display_name = "算法交易"
-    engine_class = AlgoEngine
-    widget_name = "AlgoManager"
-    icon_name = str(app_path.joinpath("ui", "algo.ico"))
+    app_name: str = APP_NAME
+    app_module: str = __module__
+    app_path: Path = Path(__file__).parent
+    display_name: str = "算法交易"
+    engine_class: AlgoEngine = AlgoEngine
+    widget_name: str = "AlgoManager"
+    icon_name: str = str(app_path.joinpath("ui", "algo.ico"))
