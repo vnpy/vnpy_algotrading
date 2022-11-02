@@ -78,6 +78,10 @@ class AlgoEngine(BaseEngine):
         """"""
         self.algo_templates[template.__name__] = template
 
+    def get_algo_template(self) -> None:
+        """"""
+        return self.algo_templates
+
     def load_algo_setting(self) -> None:
         """"""
         self.algo_settings: dict = load_json(self.setting_filename)

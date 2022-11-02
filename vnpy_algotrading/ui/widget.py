@@ -544,7 +544,8 @@ class AlgoManager(QtWidgets.QWidget):
         vbox: QtWidgets.QVBoxLayout = QtWidgets.QVBoxLayout()
         vbox.addWidget(widget)
 
-        for algo_template in self.algo_engine.algo_templates.values():
+        algo_templates: dict = self.algo_engine.get_algo_template()
+        for algo_template in algo_templates.values():
             widget: AlgoWidget = AlgoWidget(self.algo_engine, algo_template)
             vbox.addWidget(widget)
 
