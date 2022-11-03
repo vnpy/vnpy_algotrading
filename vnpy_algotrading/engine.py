@@ -1,4 +1,4 @@
-from typing import Any, Optional
+from typing import Dict, List, Optional, Set
 
 from vnpy.event import EventEngine, Event
 from vnpy.trader.engine import BaseEngine, MainEngine
@@ -16,6 +16,7 @@ from vnpy.trader.object import (
     ContractData,
     OrderData,
     TickData,
+    TradeData,
     CancelRequest
 )
 from vnpy.trader.utility import load_json, save_json, round_to
@@ -34,12 +35,12 @@ class AlgoEngine(BaseEngine):
     """"""
     setting_filename: str = "algo_trading_setting.json"
 
-    def __init__(self, main_engine: MainEngine, event_engine: EventEngine):
+    def __init__(self, main_engine: MainEngine, event_engine: EventEngine) -> None:
         """构造函数"""
         super().__init__(main_engine, event_engine, APP_NAME)
 
-        self.algos: dict = {}
-        self.symbol_algo_map: dict = {}
+        self.algos: Dict[str, AlgoTemplate] = {}
+        self.symbol_algo_map: Dict[str, Set[AlgoTemplate]] = {}
         self.orderid_algo_map: dict = {}
 
         self.algo_templates: dict = {}
@@ -77,6 +78,10 @@ class AlgoEngine(BaseEngine):
         """"""
         self.algo_templates[template.__name__] = template
 
+    def get_algo_template(self) -> None:
+        """"""
+        return self.algo_templates
+
     def load_algo_setting(self) -> None:
         """"""
         self.algo_settings: dict = load_json(self.setting_filename)
@@ -99,9 +104,9 @@ class AlgoEngine(BaseEngine):
 
     def process_tick_event(self, event: Event) -> None:
         """"""
-        tick: Any = event.data
+        tick: TickData = event.data
 
-        algos: Any = self.symbol_algo_map.get(tick.vt_symbol, None)
+        algos: Optional[Set[AlgoTemplate]] = self.symbol_algo_map.get(tick.vt_symbol, None)
         if algos:
             for algo in algos:
                 algo.update_tick(tick)
@@ -109,14 +114,14 @@ class AlgoEngine(BaseEngine):
     def process_timer_event(self, event: Event) -> None:
         """"""
         # 生成列表避免字典改变
-        algos: list = list(self.algos.values())
+        algos: List[AlgoTemplate] = list(self.algos.values())
 
         for algo in algos:
             algo.update_timer()
 
     def process_trade_event(self, event: Event) -> None:
         """"""
-        trade: Any = event.data
+        trade: TradeData = event.data
 
         algo: Optional[AlgoTemplate] = self.orderid_algo_map.get(trade.vt_orderid, None)
         if algo:
@@ -124,7 +129,7 @@ class AlgoEngine(BaseEngine):
 
     def process_order_event(self, event: Event) -> None:
         """"""
-        order: Any = event.data
+        order: OrderData = event.data
 
         algo: Optional[AlgoTemplate] = self.orderid_algo_map.get(order.vt_orderid, None)
         if algo:
@@ -160,10 +165,10 @@ class AlgoEngine(BaseEngine):
             self.write_log(f'订阅行情失败，找不到合约：{vt_symbol}', algo)
             return
 
-        algos: Any = self.symbol_algo_map.setdefault(vt_symbol, set())
+        algos: set = self.symbol_algo_map.setdefault(vt_symbol, set())
 
         if not algos:
-            req = SubscribeRequest(
+            req: SubscribeRequest = SubscribeRequest(
                 symbol=contract.symbol,
                 exchange=contract.exchange
             )
@@ -238,7 +243,7 @@ class AlgoEngine(BaseEngine):
     def write_log(self, msg: str, algo: AlgoTemplate = None) -> None:
         """"""
         if algo:
-            msg = f"{algo.algo_name}：{msg}"
+            msg: str = f"{algo.algo_name}：{msg}"
 
         log: LogData = LogData(msg=msg, gateway_name=APP_NAME)
         event: Event = Event(EVENT_ALGO_LOG, data=log)

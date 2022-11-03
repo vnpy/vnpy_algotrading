@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import Any, Dict, Optional
 
 from vnpy.event import EventEngine, Event
-from vnpy.trader.engine import MainEngine
+from vnpy.trader.engine import MainEngine, LogData
 from vnpy.trader.ui import QtWidgets, QtCore
 
 from ..engine import (
@@ -26,7 +26,7 @@ class AlgoWidget(QtWidgets.QWidget):
         self,
         algo_engine: AlgoEngine,
         algo_template: AlgoTemplate
-    ):
+    ) -> None:
         """"""
         super().__init__()
 
@@ -305,7 +305,7 @@ class AlgoMonitor(QtWidgets.QTableWidget):
 
     def get_algo_cells(self, algo_name: str) -> dict:
         """"""
-        cells: dict = self.algo_cells.get(algo_name, None)
+        cells: Optional[dict] = self.algo_cells.get(algo_name, None)
 
         if not cells:
             stop_func = partial(self.stop_algo, algo_name=algo_name)
@@ -353,7 +353,7 @@ class SettingMonitor(QtWidgets.QTableWidget):
     setting_signal: QtCore.pyqtSignal = QtCore.pyqtSignal(Event)
     use_signal: QtCore.pyqtSignal = QtCore.pyqtSignal(dict)
 
-    def __init__(self, algo_engine: AlgoEngine, event_engine: EventEngine):
+    def __init__(self, algo_engine: AlgoEngine, event_engine: EventEngine) -> None:
         """"""
         super().__init__()
 
@@ -462,7 +462,7 @@ class LogMonitor(QtWidgets.QTableWidget):
     """"""
     signal: QtCore.pyqtSignal = QtCore.pyqtSignal(Event)
 
-    def __init__(self, event_engine: EventEngine):
+    def __init__(self, event_engine: EventEngine) -> None:
         """"""
         super().__init__()
 
@@ -500,8 +500,8 @@ class LogMonitor(QtWidgets.QTableWidget):
 
     def process_log_event(self, event: Event) -> None:
         """"""
-        log: Any = event.data
-        msg = log.msg
+        log: LogData = event.data
+        msg: str = log.msg
         timestamp: str = datetime.now().strftime("%H:%M:%S")
 
         timestamp_cell: QtWidgets.QTableWidgetItem = QtWidgets.QTableWidgetItem(timestamp)
@@ -515,7 +515,7 @@ class LogMonitor(QtWidgets.QTableWidget):
 class AlgoManager(QtWidgets.QWidget):
     """"""
 
-    def __init__(self, main_engine: MainEngine, event_engine: EventEngine):
+    def __init__(self, main_engine: MainEngine, event_engine: EventEngine) -> None:
         """"""
         super().__init__()
 
@@ -544,7 +544,8 @@ class AlgoManager(QtWidgets.QWidget):
         vbox: QtWidgets.QVBoxLayout = QtWidgets.QVBoxLayout()
         vbox.addWidget(widget)
 
-        for algo_template in self.algo_engine.algo_templates.values():
+        algo_templates: dict = self.algo_engine.get_algo_template()
+        for algo_template in algo_templates.values():
             widget: AlgoWidget = AlgoWidget(self.algo_engine, algo_template)
             vbox.addWidget(widget)
 
@@ -626,7 +627,7 @@ def to_text(data: dict) -> str:
     """将字典数据转化为字符串数据"""
     buf: list = []
     for key, value in data.items():
-        key = NAME_DISPLAY_MAP.get(key, key)
+        key: str = NAME_DISPLAY_MAP.get(key, key)
         buf.append(f"{key}：{value}")
-    text = "，".join(buf)
+    text: str = "，".join(buf)
     return text
