@@ -1,3 +1,4 @@
+from collections import defaultdict
 from typing import Dict, List, Optional, Set
 
 from vnpy.event import EventEngine, Event
@@ -40,7 +41,7 @@ class AlgoEngine(BaseEngine):
         super().__init__(main_engine, event_engine, APP_NAME)
 
         self.algos: Dict[str, AlgoTemplate] = {}
-        self.symbol_algo_map: Dict[str, Set[AlgoTemplate]] = {}
+        self.symbol_algo_map: Dict[str, Set[AlgoTemplate]] = defaultdict(set)
         self.orderid_algo_map: dict = {}
 
         self.algo_templates: dict = {}
@@ -78,7 +79,7 @@ class AlgoEngine(BaseEngine):
         """"""
         self.algo_templates[template.__name__] = template
 
-    def get_algo_template(self) -> None:
+    def get_algo_template(self) -> dict:
         """"""
         return self.algo_templates
 
@@ -104,12 +105,11 @@ class AlgoEngine(BaseEngine):
 
     def process_tick_event(self, event: Event) -> None:
         """"""
-        tick: TickData = event.data
+        tick: TickData = event.data        
+        algos: Optional[Set[AlgoTemplate]] = self.symbol_algo_map[tick.vt_symbol]
 
-        algos: Optional[Set[AlgoTemplate]] = self.symbol_algo_map.get(tick.vt_symbol, None)
-        if algos:
-            for algo in algos:
-                algo.update_tick(tick)
+        for algo in algos:
+            algo.update_tick(tick)
 
     def process_timer_event(self, event: Event) -> None:
         """"""
@@ -165,7 +165,7 @@ class AlgoEngine(BaseEngine):
             self.write_log(f'订阅行情失败，找不到合约：{vt_symbol}', algo)
             return
 
-        algos: set = self.symbol_algo_map.setdefault(vt_symbol, set())
+        algos: set = self.symbol_algo_map[vt_symbol]
 
         if not algos:
             req: SubscribeRequest = SubscribeRequest(
