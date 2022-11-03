@@ -292,7 +292,7 @@ class AlgoEngine(BaseEngine):
     def put_variables_event(self, algo: AlgoTemplate, variables: dict) -> None:
         """"""
         # 检查算法是否运行结束
-        if not variables["active"] and algo in self.algos:
+        if not variables["active"] and algo in self.algos.values():
             self.algos.pop(algo.algo_name)
 
             for algos in self.symbol_algo_map.values():
