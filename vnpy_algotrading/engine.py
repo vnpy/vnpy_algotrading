@@ -151,7 +151,6 @@ class AlgoEngine(BaseEngine):
         algo: Optional[AlgoTemplate] = self.algos.get(algo_name, None)
         if algo:
             algo.stop()
-            self.algos.pop(algo_name)
 
     def stop_all(self) -> None:
         """"""
@@ -292,6 +291,15 @@ class AlgoEngine(BaseEngine):
 
     def put_variables_event(self, algo: AlgoTemplate, variables: dict) -> None:
         """"""
+        # 检查算法是否运行结束
+        if not variables["active"]:
+            self.algos.pop(algo.algo_name)
+
+            for algos in self.symbol_algo_map.values():
+                if algo in algos:
+                    algos.remove(algo)
+
+        # 推送事件
         event: Event = Event(EVENT_ALGO_VARIABLES)
         event.data = {
             "algo_name": algo.algo_name,
