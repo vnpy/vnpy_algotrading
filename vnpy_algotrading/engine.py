@@ -46,6 +46,7 @@ class AlgoEngine(BaseEngine):
 
         self.algo_templates: dict = {}
         self.algo_settings: dict = {}
+        self.algo_count: dict = {}
 
         self.load_algo_template()
         self.register_event()
@@ -145,7 +146,20 @@ class AlgoEngine(BaseEngine):
         template_name: str = setting["template_name"]
         algo_template: AlgoTemplate = self.algo_templates[template_name]
 
+        # 创建算法实例
         algo: AlgoTemplate = algo_template.new(self, setting)
+
+        # 订阅行情
+        algos: set = self.symbol_algo_map[algo.vt_symbol]
+        if not algos:
+            req: SubscribeRequest = SubscribeRequest(
+                symbol=contract.symbol,
+                exchange=contract.exchange
+            )
+            self.main_engine.subscribe(req, contract.gateway_name)
+        algos.add(algo)
+
+        # 启动算法
         algo.start()
 
         self.algos[algo.algo_name] = algo
@@ -162,20 +176,6 @@ class AlgoEngine(BaseEngine):
         """"""
         for algo_name in list(self.algos.keys()):
             self.stop_algo(algo_name)
-
-    def subscribe(self, algo: AlgoTemplate) -> None:
-        """"""
-        contract: Optional[ContractData] = self.main_engine.get_contract(algo.vt_symbol)
-        algos: set = self.symbol_algo_map[algo.vt_symbol]
-
-        if not algos:
-            req: SubscribeRequest = SubscribeRequest(
-                symbol=contract.symbol,
-                exchange=contract.exchange
-            )
-            self.main_engine.subscribe(req, contract.gateway_name)
-
-        algos.add(algo)
 
     def send_order(
         self,

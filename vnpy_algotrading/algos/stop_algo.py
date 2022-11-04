@@ -53,7 +53,6 @@ class StopAlgo(AlgoTemplate):
         self.traded = 0
         self.order_status = ""
 
-        self.subscribe()
         self.put_parameters_event()
         self.put_variables_event()
 

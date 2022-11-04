@@ -64,7 +64,6 @@ class TwapAlgo(AlgoTemplate):
 
         self.last_tick = None
 
-        self.subscribe()
         self.put_parameters_event()
         self.put_variables_event()
 

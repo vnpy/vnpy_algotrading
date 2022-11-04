@@ -86,8 +86,6 @@ class BestLimitAlgo(AlgoTemplate):
             self.stop()
             return
 
-        self.subscribe()
-
     def on_tick(self, tick: TickData):
         """"""
         self.last_tick = tick

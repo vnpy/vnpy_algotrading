@@ -105,10 +105,6 @@ class AlgoTemplate:
 
         self.write_log("停止算法")
 
-    def subscribe(self) -> None:
-        """"""
-        self.algo_engine.subscribe(self)
-
     def buy(
         self,
         price: float,

@@ -49,7 +49,6 @@ class SniperAlgo(AlgoTemplate):
         self.vt_orderid = ""
         self.traded = 0
 
-        self.subscribe()
         self.put_parameters_event()
         self.put_variables_event()
 
