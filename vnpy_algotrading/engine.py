@@ -105,7 +105,7 @@ class AlgoEngine(BaseEngine):
 
     def process_tick_event(self, event: Event) -> None:
         """"""
-        tick: TickData = event.data        
+        tick: TickData = event.data
         algos: Optional[Set[AlgoTemplate]] = self.symbol_algo_map[tick.vt_symbol]
 
         for algo in algos:
@@ -292,7 +292,7 @@ class AlgoEngine(BaseEngine):
     def put_variables_event(self, algo: AlgoTemplate, variables: dict) -> None:
         """"""
         # 检查算法是否运行结束
-        if not variables["active"]:
+        if not variables["active"] and algo in self.algos.values():
             self.algos.pop(algo.algo_name)
 
             for algos in self.symbol_algo_map.values():
