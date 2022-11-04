@@ -47,13 +47,13 @@ class BestLimitAlgo(AlgoTemplate):
         self,
         algo_engine: BaseEngine,
         algo_name: str,
-        setting: dict
+        setting: dict,
+        vt_symbol: str
     ):
         """"""
-        super().__init__(algo_engine, algo_name, setting)
+        super().__init__(algo_engine, algo_name, setting, vt_symbol)
 
         # 参数
-        self.vt_symbol = setting["vt_symbol"]
         self.direction = Direction(setting["direction"])
         self.volume = setting["volume"]
         self.offset = Offset(setting["offset"])
@@ -86,7 +86,7 @@ class BestLimitAlgo(AlgoTemplate):
             self.stop()
             return
 
-        self.subscribe(self.vt_symbol)
+        self.subscribe()
 
     def on_tick(self, tick: TickData):
         """"""
@@ -131,7 +131,6 @@ class BestLimitAlgo(AlgoTemplate):
 
         self.order_price = self.last_tick.bid_price_1
         self.vt_orderid = self.buy(
-            self.vt_symbol,
             self.order_price,
             order_volume,
             offset=self.offset
@@ -146,7 +145,6 @@ class BestLimitAlgo(AlgoTemplate):
 
         self.order_price = self.last_tick.ask_price_1
         self.vt_orderid = self.sell(
-            self.vt_symbol,
             self.order_price,
             order_volume,
             offset=self.offset

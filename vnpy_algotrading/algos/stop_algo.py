@@ -35,13 +35,13 @@ class StopAlgo(AlgoTemplate):
         self,
         algo_engine: BaseEngine,
         algo_name: str,
-        setting: dict
+        setting: dict,
+        vt_symbol: str
     ):
         """"""
-        super().__init__(algo_engine, algo_name, setting)
+        super().__init__(algo_engine, algo_name, setting, vt_symbol)
 
         # 参数
-        self.vt_symbol = setting["vt_symbol"]
         self.direction = Direction(setting["direction"])
         self.stop_price = setting["stop_price"]
         self.volume = setting["volume"]
@@ -53,7 +53,7 @@ class StopAlgo(AlgoTemplate):
         self.traded = 0
         self.order_status = ""
 
-        self.subscribe(self.vt_symbol)
+        self.subscribe()
         self.put_parameters_event()
         self.put_variables_event()
 
@@ -70,7 +70,6 @@ class StopAlgo(AlgoTemplate):
                     price = min(price, tick.limit_up)
 
                 self.vt_orderid = self.buy(
-                    self.vt_symbol,
                     price,
                     self.volume,
                     offset=self.offset
@@ -86,7 +85,6 @@ class StopAlgo(AlgoTemplate):
                     price = max(price, tick.limit_down)
 
                 self.vt_orderid = self.sell(
-                    self.vt_symbol,
                     price,
                     self.volume,
                     offset=self.offset

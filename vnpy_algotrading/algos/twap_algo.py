@@ -38,13 +38,13 @@ class TwapAlgo(AlgoTemplate):
         self,
         algo_engine: BaseEngine,
         algo_name: str,
-        setting: dict
+        setting: dict,
+        vt_symbol: str
     ):
         """"""
-        super().__init__(algo_engine, algo_name, setting)
+        super().__init__(algo_engine, algo_name, setting, vt_symbol)
 
         # 参数
-        self.vt_symbol = setting["vt_symbol"]
         self.direction = Direction(setting["direction"])
         self.price = setting["price"]
         self.volume = setting["volume"]
@@ -54,7 +54,7 @@ class TwapAlgo(AlgoTemplate):
 
         # 变量
         self.order_volume = self.volume / (self.time / self.interval)
-        contract = self.get_contract(self.vt_symbol)
+        contract = self.get_contract()
         if contract:
             self.order_volume = round_to(self.order_volume, contract.min_volume)
 
@@ -64,7 +64,7 @@ class TwapAlgo(AlgoTemplate):
 
         self.last_tick = None
 
-        self.subscribe(self.vt_symbol)
+        self.subscribe()
         self.put_parameters_event()
         self.put_variables_event()
 
@@ -109,9 +109,7 @@ class TwapAlgo(AlgoTemplate):
 
         if self.direction == Direction.LONG:
             if tick.ask_price_1 <= self.price:
-                self.buy(self.vt_symbol, self.price,
-                         order_volume, offset=self.offset)
+                self.buy(self.price, order_volume, offset=self.offset)
         else:
             if tick.bid_price_1 >= self.price:
-                self.sell(self.vt_symbol, self.price,
-                          order_volume, offset=self.offset)
+                self.sell(self.price, order_volume, offset=self.offset)
