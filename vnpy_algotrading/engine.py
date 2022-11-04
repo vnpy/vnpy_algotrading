@@ -137,6 +137,11 @@ class AlgoEngine(BaseEngine):
 
     def start_algo(self, setting: dict) -> str:
         """"""
+        contract: Optional[ContractData] = self.main_engine.get_contract(setting["vt_symbol"])
+        if not contract:
+            self.write_log(f'算法启动失败，找不到合约：{setting["vt_symbol"]}')
+            return ""
+
         template_name: str = setting["template_name"]
         algo_template: AlgoTemplate = self.algo_templates[template_name]
 
@@ -161,10 +166,6 @@ class AlgoEngine(BaseEngine):
     def subscribe(self, algo: AlgoTemplate) -> None:
         """"""
         contract: Optional[ContractData] = self.main_engine.get_contract(algo.vt_symbol)
-        if not contract:
-            self.write_log(f'订阅行情失败，找不到合约：{algo.vt_symbol}', algo)
-            return
-
         algos: set = self.symbol_algo_map[algo.vt_symbol]
 
         if not algos:
@@ -187,10 +188,6 @@ class AlgoEngine(BaseEngine):
     ) -> str:
         """"""
         contract: Optional[ContractData] = self.main_engine.get_contract(algo.vt_symbol)
-        if not contract:
-            self.write_log(f'委托下单失败，找不到合约：{algo.vt_symbol}', algo)
-            return
-
         volume: float = round_to(volume, contract.min_volume)
         if not volume:
             return ""
