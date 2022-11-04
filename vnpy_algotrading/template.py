@@ -17,13 +17,20 @@ class AlgoTemplate:
         self,
         algo_engine: BaseEngine,
         algo_name: str,
-        setting: dict,
-        vt_symbol: str
+        vt_symbol: str,
+        direction: str,
+        offset: str,
+        volume: float,
+        setting: dict
     ) -> None:
         """构造函数"""
         self.algo_engine: BaseEngine = algo_engine
         self.algo_name: str = algo_name
+
         self.vt_symbol: str = vt_symbol
+        self.direction = Direction(direction)
+        self.volume = volume
+        self.offset = Offset(offset)
 
         self.active: bool = False
         self.active_orders: Dict[str, OrderData] = {}  # vt_orderid:order

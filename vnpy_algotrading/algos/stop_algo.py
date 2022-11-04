@@ -35,18 +35,18 @@ class StopAlgo(AlgoTemplate):
         self,
         algo_engine: BaseEngine,
         algo_name: str,
-        setting: dict,
-        vt_symbol: str
+        vt_symbol: str,
+        direction: str,
+        offset: str,
+        volume: float,
+        setting: dict
     ):
         """"""
-        super().__init__(algo_engine, algo_name, setting, vt_symbol)
+        super().__init__(algo_engine, algo_name, vt_symbol, direction, offset, volume, setting)
 
         # 参数
-        self.direction = Direction(setting["direction"])
         self.stop_price = setting["stop_price"]
-        self.volume = setting["volume"]
         self.price_add = setting["price_add"]
-        self.offset = Offset(setting["offset"])
 
         # 变量
         self.vt_orderid = ""
