@@ -30,14 +30,6 @@ class AlgoTemplate:
 
         self.variables.insert(0, "active")
 
-    @classmethod
-    def new(cls, algo_engine: BaseEngine, setting: dict) -> "AlgoTemplate":
-        """创建一个新的算法实例"""
-        cls._count += 1
-        algo_name: str = f"{cls.__name__}_{cls._count}"
-        algo: AlgoTemplate = cls(algo_engine, algo_name, setting, setting["vt_symbol"])
-        return algo
-
     def update_tick(self, tick: TickData) -> None:
         """"""
         if self.active:

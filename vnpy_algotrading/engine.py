@@ -46,7 +46,6 @@ class AlgoEngine(BaseEngine):
 
         self.algo_templates: dict = {}
         self.algo_settings: dict = {}
-        self.algo_count: dict = {}
 
         self.load_algo_template()
         self.register_event()
@@ -138,16 +137,19 @@ class AlgoEngine(BaseEngine):
 
     def start_algo(self, setting: dict) -> str:
         """"""
-        contract: Optional[ContractData] = self.main_engine.get_contract(setting["vt_symbol"])
+        vt_symbol: str = setting["vt_symbol"]
+        contract: Optional[ContractData] = self.main_engine.get_contract(vt_symbol)
         if not contract:
-            self.write_log(f'算法启动失败，找不到合约：{setting["vt_symbol"]}')
+            self.write_log(f'算法启动失败，找不到合约：{vt_symbol}')
             return ""
 
         template_name: str = setting["template_name"]
         algo_template: AlgoTemplate = self.algo_templates[template_name]
 
         # 创建算法实例
-        algo: AlgoTemplate = algo_template.new(self, setting)
+        algo_template._count += 1
+        algo_name: str = f"{algo_template.__name__}_{algo_template._count}"
+        algo: AlgoTemplate = algo_template(self, algo_name, setting, vt_symbol)
 
         # 订阅行情
         algos: set = self.symbol_algo_map[algo.vt_symbol]
@@ -162,9 +164,9 @@ class AlgoEngine(BaseEngine):
         # 启动算法
         algo.start()
 
-        self.algos[algo.algo_name] = algo
+        self.algos[algo_name] = algo
 
-        return algo.algo_name
+        return algo_name
 
     def stop_algo(self, algo_name: str) -> None:
         """"""
