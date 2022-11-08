@@ -169,6 +169,19 @@ class AlgoEngine(BaseEngine):
 
         return algo_name
 
+    def pause_algo(self, algo_name: str) -> None:
+        """"""
+        algo: Optional[AlgoTemplate] = self.algos.get(algo_name, None)
+        if algo:
+            algo.pause()
+
+    def restart_algo(self, algo_name: str) -> None:
+        """"""
+        algo: Optional[AlgoTemplate] = self.algos.get(algo_name, None)
+        if algo:
+            algo.start()
+            algo.write_log("重启算法")
+
     def stop_algo(self, algo_name: str) -> None:
         """"""
         algo: Optional[AlgoTemplate] = self.algos.get(algo_name, None)

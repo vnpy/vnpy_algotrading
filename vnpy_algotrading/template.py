@@ -72,6 +72,10 @@ class AlgoTemplate:
         """"""
         pass
 
+    def on_pause(self) -> None:
+        """"""
+        pass
+
     @virtual
     def on_tick(self, tick: TickData) -> None:
         """"""
@@ -106,6 +110,15 @@ class AlgoTemplate:
         self.put_variables_event()
 
         self.write_log("停止算法")
+
+    def pause(self) -> None:
+        """"""
+        self.status = AlgoStatus.PAUSED
+        self.cancel_all()
+        self.on_pause()
+        self.put_variables_event()
+
+        self.write_log("暂停算法")
 
     def buy(
         self,
