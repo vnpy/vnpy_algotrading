@@ -14,7 +14,8 @@ from ..engine import (
     EVENT_ALGO_LOG,
     EVENT_ALGO_PARAMETERS,
     EVENT_ALGO_VARIABLES,
-    EVENT_ALGO_SETTING
+    EVENT_ALGO_SETTING,
+    AlgoStatus
 )
 from .display import NAME_DISPLAY_MAP
 
@@ -286,7 +287,7 @@ class AlgoMonitor(QtWidgets.QTableWidget):
         variables_cell.setText(text)
 
         row: int = self.row(variables_cell)
-        active: bool = variables["active"]
+        active: bool = variables["status"] != AlgoStatus.STOPPED
 
         if self.mode_active:
             if active:

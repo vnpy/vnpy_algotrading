@@ -28,7 +28,8 @@ from .base import (
     EVENT_ALGO_PARAMETERS,
     EVENT_ALGO_SETTING,
     EVENT_ALGO_VARIABLES,
-    APP_NAME
+    APP_NAME,
+    AlgoStatus
 )
 
 
@@ -164,7 +165,6 @@ class AlgoEngine(BaseEngine):
 
         # 启动算法
         algo.start()
-
         self.algos[algo_name] = algo
 
         return algo_name
@@ -292,7 +292,7 @@ class AlgoEngine(BaseEngine):
     def put_variables_event(self, algo: AlgoTemplate, variables: dict) -> None:
         """"""
         # 检查算法是否运行结束
-        if not variables["active"] and algo in self.algos.values():
+        if algo in self.algos.values() and algo.status == AlgoStatus.STOPPED:
             self.algos.pop(algo.algo_name)
 
             for algos in self.symbol_algo_map.values():

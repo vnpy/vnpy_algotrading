@@ -5,6 +5,8 @@ from vnpy.trader.object import TickData, OrderData, TradeData, ContractData
 from vnpy.trader.constant import OrderType, Offset, Direction
 from vnpy.trader.utility import virtual
 
+from .base import AlgoStatus
+
 
 class AlgoTemplate:
     """"""
@@ -32,14 +34,14 @@ class AlgoTemplate:
         self.volume = volume
         self.offset = Offset(offset)
 
-        self.active: bool = False
+        self.status: str = AlgoStatus.NOTINITED
         self.active_orders: Dict[str, OrderData] = {}  # vt_orderid:order
 
-        self.variables.insert(0, "active")
+        self.variables.insert(0, "status")
 
     def update_tick(self, tick: TickData) -> None:
         """"""
-        if self.active:
+        if self.status == AlgoStatus.RUNNING:
             self.on_tick(tick)
 
     def update_order(self, order: OrderData) -> None:
@@ -57,9 +59,10 @@ class AlgoTemplate:
 
     def update_timer(self) -> None:
         """"""
-        if self.active:
+        if self.status == AlgoStatus.RUNNING:
             self.on_timer()
 
+    @virtual
     def on_start(self) -> None:
         """"""
         pass
@@ -91,13 +94,13 @@ class AlgoTemplate:
 
     def start(self) -> None:
         """"""
-        self.active = True
+        self.status = AlgoStatus.RUNNING
         self.on_start()
         self.put_variables_event()
 
     def stop(self) -> None:
         """"""
-        self.active = False
+        self.status = AlgoStatus.STOPPED
         self.cancel_all()
         self.on_stop()
         self.put_variables_event()
@@ -112,7 +115,7 @@ class AlgoTemplate:
         offset: Offset = Offset.NONE
     ) -> None:
         """"""
-        if not self.active:
+        if self.status != AlgoStatus.RUNNING:
             return
 
         msg: str = f"委托买入{self.vt_symbol}：{volume}@{price}"
@@ -135,7 +138,7 @@ class AlgoTemplate:
         offset: Offset = Offset.NONE
     ) -> None:
         """"""
-        if not self.active:
+        if self.status != AlgoStatus.RUNNING:
             return
 
         msg: str = f"委托卖出{self.vt_symbol}：{volume}@{price}"
