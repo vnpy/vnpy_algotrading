@@ -13,7 +13,6 @@ class AlgoStatus(Enum):
     """
     Order status.
     """
-    NOTINITED = "尚未初始化"
     RUNNING = "运行中"
     PAUSED = "暂停"
     STOPPED = "停止"

@@ -15,7 +15,9 @@ from ..engine import (
     EVENT_ALGO_PARAMETERS,
     EVENT_ALGO_VARIABLES,
     EVENT_ALGO_SETTING,
-    AlgoStatus
+    AlgoStatus,
+    Direction,
+    Offset
 )
 from .display import NAME_DISPLAY_MAP
 
@@ -178,7 +180,11 @@ class AlgoWidget(QtWidgets.QWidget):
         """启动交易算法"""
         setting: dict = self.get_setting()
         if setting:
-            self.algo_engine.start_algo(setting)
+            vt_symbol: str = setting.pop("vt_symbol")
+            direction: Direction = Direction(setting.pop("direction"))
+            offset: Offset = Offset(setting.pop("offset"))
+            volume: float = setting.pop("volume")
+            self.algo_engine.start_algo(vt_symbol, direction, offset, volume, setting)
 
     def update_setting(self, setting_name: str, setting: dict) -> None:
         """更新控件配置"""
@@ -313,7 +319,7 @@ class AlgoMonitor(QtWidgets.QTableWidget):
             self.algo_engine.pause_algo(algo_name)
             button.setText("启动")
         else:
-            self.algo_engine.restart_algo(algo_name)
+            self.algo_engine.resume_algo(algo_name)
             button.setText("暂停")
 
         self.algo_cells[algo_name]["button"] = button

@@ -34,7 +34,7 @@ class AlgoTemplate:
         self.volume = volume
         self.offset = Offset(offset)
 
-        self.status: str = AlgoStatus.NOTINITED
+        self.status: str = AlgoStatus.PAUSED
         self.active_orders: Dict[str, OrderData] = {}  # vt_orderid:order
 
         self.variables.insert(0, "status")
@@ -72,7 +72,13 @@ class AlgoTemplate:
         """"""
         pass
 
+    @virtual
     def on_pause(self) -> None:
+        """"""
+        pass
+
+    @virtual
+    def on_resume(self) -> None:
         """"""
         pass
 
@@ -102,6 +108,8 @@ class AlgoTemplate:
         self.on_start()
         self.put_variables_event()
 
+        self.write_log("启动算法")
+
     def stop(self) -> None:
         """"""
         self.status = AlgoStatus.STOPPED
@@ -119,6 +127,14 @@ class AlgoTemplate:
         self.put_variables_event()
 
         self.write_log("暂停算法")
+
+    def resume(self) -> None:
+        """"""
+        self.status = AlgoStatus.RUNNING
+        self.on_resume()
+        self.put_variables_event()
+
+        self.write_log("重启算法")
 
     def buy(
         self,
