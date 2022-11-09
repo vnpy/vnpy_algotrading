@@ -36,19 +36,19 @@ class IcebergAlgo(AlgoTemplate):
         self,
         algo_engine: BaseEngine,
         algo_name: str,
+        vt_symbol: str,
+        direction: str,
+        offset: str,
+        volume: float,
         setting: dict
     ):
         """"""
-        super().__init__(algo_engine, algo_name, setting)
+        super().__init__(algo_engine, algo_name, vt_symbol, direction, offset, volume, setting)
 
         # 参数
-        self.vt_symbol = setting["vt_symbol"]
-        self.direction = Direction(setting["direction"])
         self.price = setting["price"]
-        self.volume = setting["volume"]
         self.display_volume = setting["display_volume"]
         self.interval = setting["interval"]
-        self.offset = Offset(setting["offset"])
 
         # 变量
         self.timer_count = 0
@@ -57,7 +57,6 @@ class IcebergAlgo(AlgoTemplate):
 
         self.last_tick = None
 
-        self.subscribe(self.vt_symbol)
         self.put_parameters_event()
         self.put_variables_event()
 
@@ -98,7 +97,7 @@ class IcebergAlgo(AlgoTemplate):
 
         self.timer_count = 0
 
-        contract = self.get_contract(self.vt_symbol)
+        contract = self.get_contract()
         if not contract:
             return
 
@@ -109,14 +108,12 @@ class IcebergAlgo(AlgoTemplate):
 
             if self.direction == Direction.LONG:
                 self.vt_orderid = self.buy(
-                    self.vt_symbol,
                     self.price,
                     order_volume,
                     offset=self.offset
                 )
             else:
                 self.vt_orderid = self.sell(
-                    self.vt_symbol,
                     self.price,
                     order_volume,
                     offset=self.offset

@@ -14,7 +14,10 @@ from ..engine import (
     EVENT_ALGO_LOG,
     EVENT_ALGO_PARAMETERS,
     EVENT_ALGO_VARIABLES,
-    EVENT_ALGO_SETTING
+    EVENT_ALGO_SETTING,
+    AlgoStatus,
+    Direction,
+    Offset
 )
 from .display import NAME_DISPLAY_MAP
 
@@ -177,7 +180,11 @@ class AlgoWidget(QtWidgets.QWidget):
         """启动交易算法"""
         setting: dict = self.get_setting()
         if setting:
-            self.algo_engine.start_algo(setting)
+            vt_symbol: str = setting.pop("vt_symbol")
+            direction: Direction = Direction(setting.pop("direction"))
+            offset: Offset = Offset(setting.pop("offset"))
+            volume: float = setting.pop("volume")
+            self.algo_engine.start_algo(vt_symbol, direction, offset, volume, setting)
 
     def update_setting(self, setting_name: str, setting: dict) -> None:
         """更新控件配置"""
@@ -231,6 +238,7 @@ class AlgoMonitor(QtWidgets.QTableWidget):
         """"""
         labels: list = [
             "",
+            "",
             "算法",
             "参数",
             "状态"
@@ -244,7 +252,7 @@ class AlgoMonitor(QtWidgets.QTableWidget):
             QtWidgets.QHeaderView.ResizeToContents
         )
 
-        for column in range(2, 4):
+        for column in range(3, 5):
             self.horizontalHeader().setSectionResizeMode(
                 column,
                 QtWidgets.QHeaderView.Stretch
@@ -253,6 +261,7 @@ class AlgoMonitor(QtWidgets.QTableWidget):
 
         if not self.mode_active:
             self.hideColumn(0)
+            self.hideColumn(1)
 
     def register_event(self) -> None:
         """"""
@@ -286,7 +295,7 @@ class AlgoMonitor(QtWidgets.QTableWidget):
         variables_cell.setText(text)
 
         row: int = self.row(variables_cell)
-        active: bool = variables["active"]
+        active: bool = variables["status"] != AlgoStatus.STOPPED
 
         if self.mode_active:
             if active:
@@ -303,6 +312,18 @@ class AlgoMonitor(QtWidgets.QTableWidget):
         """"""
         self.algo_engine.stop_algo(algo_name)
 
+    def switch(self, algo_name: str) -> None:
+        """"""
+        button: QtWidgets.QPushButton = self.algo_cells[algo_name]["button"]
+        if button.text() == "暂停":
+            self.algo_engine.pause_algo(algo_name)
+            button.setText("启动")
+        else:
+            self.algo_engine.resume_algo(algo_name)
+            button.setText("暂停")
+
+        self.algo_cells[algo_name]["button"] = button
+
     def get_algo_cells(self, algo_name: str) -> dict:
         """"""
         cells: Optional[dict] = self.algo_cells.get(algo_name, None)
@@ -312,20 +333,27 @@ class AlgoMonitor(QtWidgets.QTableWidget):
             stop_button: QtWidgets.QPushButton = QtWidgets.QPushButton("停止")
             stop_button.clicked.connect(stop_func)
 
+            # 初始化时先设置暂停按钮
+            switch_func = partial(self.switch, algo_name=algo_name)
+            switch_button: QtWidgets.QPushButton = QtWidgets.QPushButton("暂停")
+            switch_button.clicked.connect(switch_func)
+
             name_cell: QtWidgets.QTableWidgetItem = QtWidgets.QTableWidgetItem(algo_name)
             parameters_cell: QtWidgets.QTableWidgetItem = QtWidgets.QTableWidgetItem()
             variables_cell: QtWidgets.QTableWidgetItem = QtWidgets.QTableWidgetItem()
 
             self.insertRow(0)
             self.setCellWidget(0, 0, stop_button)
-            self.setItem(0, 1, name_cell)
-            self.setItem(0, 2, parameters_cell)
-            self.setItem(0, 3, variables_cell)
+            self.setCellWidget(0, 1, switch_button)
+            self.setItem(0, 2, name_cell)
+            self.setItem(0, 3, parameters_cell)
+            self.setItem(0, 4, variables_cell)
 
             cells: dict = {
                 "name": name_cell,
                 "parameters": parameters_cell,
-                "variables": variables_cell
+                "variables": variables_cell,
+                "button": switch_button        # 缓存对应algo_name的button进字典便于更新按钮状态
             }
             self.algo_cells[algo_name] = cells
 

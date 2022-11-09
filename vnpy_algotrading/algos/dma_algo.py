@@ -41,25 +41,24 @@ class DmaAlgo(AlgoTemplate):
         self,
         algo_engine: BaseEngine,
         algo_name: str,
+        vt_symbol: str,
+        direction: str,
+        offset: str,
+        volume: float,
         setting: dict
     ):
         """"""
-        super().__init__(algo_engine, algo_name, setting)
+        super().__init__(algo_engine, algo_name, vt_symbol, direction, offset, volume, setting)
 
         # 参数
-        self.vt_symbol = setting["vt_symbol"]
-        self.direction = Direction(setting["direction"])
         self.order_type = OrderType(setting["order_type"])
         self.price = setting["price"]
-        self.volume = setting["volume"]
-        self.offset = Offset(setting["offset"])
 
         # 变量
         self.vt_orderid = ""
         self.traded = 0
         self.order_status = ""
 
-        self.subscribe(self.vt_symbol)
         self.put_parameters_event()
         self.put_variables_event()
 
@@ -68,7 +67,6 @@ class DmaAlgo(AlgoTemplate):
         if not self.vt_orderid:
             if self.direction == Direction.LONG:
                 self.vt_orderid = self.buy(
-                    self.vt_symbol,
                     self.price,
                     self.volume,
                     self.order_type,
@@ -77,7 +75,6 @@ class DmaAlgo(AlgoTemplate):
 
             else:
                 self.vt_orderid = self.sell(
-                    self.vt_symbol,
                     self.price,
                     self.volume,
                     self.order_type,

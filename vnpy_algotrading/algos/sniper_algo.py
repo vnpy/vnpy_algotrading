@@ -33,23 +33,22 @@ class SniperAlgo(AlgoTemplate):
         self,
         algo_engine: BaseEngine,
         algo_name: str,
+        vt_symbol: str,
+        direction: str,
+        offset: str,
+        volume: float,
         setting: dict
     ):
         """"""
-        super().__init__(algo_engine, algo_name, setting)
+        super().__init__(algo_engine, algo_name, vt_symbol, direction, offset, volume, setting)
 
         # 参数
-        self.vt_symbol = setting["vt_symbol"]
-        self.direction = Direction(setting["direction"])
         self.price = setting["price"]
-        self.volume = setting["volume"]
-        self.offset = Offset(setting["offset"])
 
         # 变量
         self.vt_orderid = ""
         self.traded = 0
 
-        self.subscribe(self.vt_symbol)
         self.put_parameters_event()
         self.put_variables_event()
 
@@ -65,7 +64,6 @@ class SniperAlgo(AlgoTemplate):
                 order_volume = min(order_volume, tick.ask_volume_1)
 
                 self.vt_orderid = self.buy(
-                    self.vt_symbol,
                     self.price,
                     order_volume,
                     offset=self.offset
@@ -76,7 +74,6 @@ class SniperAlgo(AlgoTemplate):
                 order_volume = min(order_volume, tick.bid_volume_1)
 
                 self.vt_orderid = self.sell(
-                    self.vt_symbol,
                     self.price,
                     order_volume,
                     offset=self.offset

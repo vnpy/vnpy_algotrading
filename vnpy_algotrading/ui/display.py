@@ -6,7 +6,7 @@ NAME_DISPLAY_MAP: dict = {
     "time": "执行时间（秒）",
     "interval": "每轮间隔（秒）",
     "offset": "开平",
-    "active": "算法状态",
+    "status": "算法状态",
     "traded": "成交数量",
     "order_volume": "单笔委托",
     "timer_count": "本轮读秒",

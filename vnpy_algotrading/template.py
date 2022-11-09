@@ -5,6 +5,8 @@ from vnpy.trader.object import TickData, OrderData, TradeData, ContractData
 from vnpy.trader.constant import OrderType, Offset, Direction
 from vnpy.trader.utility import virtual
 
+from .base import AlgoStatus
+
 
 class AlgoTemplate:
     """"""
@@ -17,28 +19,29 @@ class AlgoTemplate:
         self,
         algo_engine: BaseEngine,
         algo_name: str,
+        vt_symbol: str,
+        direction: str,
+        offset: str,
+        volume: float,
         setting: dict
     ) -> None:
         """构造函数"""
         self.algo_engine: BaseEngine = algo_engine
         self.algo_name: str = algo_name
 
-        self.active: bool = False
+        self.vt_symbol: str = vt_symbol
+        self.direction = Direction(direction)
+        self.volume = volume
+        self.offset = Offset(offset)
+
+        self.status: str = AlgoStatus.PAUSED
         self.active_orders: Dict[str, OrderData] = {}  # vt_orderid:order
 
-        self.variables.insert(0, "active")
-
-    @classmethod
-    def new(cls, algo_engine: BaseEngine, setting: dict) -> "AlgoTemplate":
-        """创建一个新的算法实例"""
-        cls._count += 1
-        algo_name: str = f"{cls.__name__}_{cls._count}"
-        algo: AlgoTemplate = cls(algo_engine, algo_name, setting)
-        return algo
+        self.variables.insert(0, "status")
 
     def update_tick(self, tick: TickData) -> None:
         """"""
-        if self.active:
+        if self.status == AlgoStatus.RUNNING:
             self.on_tick(tick)
 
     def update_order(self, order: OrderData) -> None:
@@ -56,15 +59,26 @@ class AlgoTemplate:
 
     def update_timer(self) -> None:
         """"""
-        if self.active:
+        if self.status == AlgoStatus.RUNNING:
             self.on_timer()
 
+    @virtual
     def on_start(self) -> None:
         """"""
         pass
 
     @virtual
     def on_stop(self) -> None:
+        """"""
+        pass
+
+    @virtual
+    def on_pause(self) -> None:
+        """"""
+        pass
+
+    @virtual
+    def on_resume(self) -> None:
         """"""
         pass
 
@@ -90,41 +104,54 @@ class AlgoTemplate:
 
     def start(self) -> None:
         """"""
-        self.active = True
+        self.status = AlgoStatus.RUNNING
         self.on_start()
         self.put_variables_event()
 
+        self.write_log("启动算法")
+
     def stop(self) -> None:
         """"""
-        self.active = False
+        self.status = AlgoStatus.STOPPED
         self.cancel_all()
         self.on_stop()
         self.put_variables_event()
 
         self.write_log("停止算法")
 
-    def subscribe(self, vt_symbol: str) -> None:
+    def pause(self) -> None:
         """"""
-        self.algo_engine.subscribe(self, vt_symbol)
+        self.status = AlgoStatus.PAUSED
+        self.cancel_all()
+        self.on_pause()
+        self.put_variables_event()
+
+        self.write_log("暂停算法")
+
+    def resume(self) -> None:
+        """"""
+        self.status = AlgoStatus.RUNNING
+        self.on_resume()
+        self.put_variables_event()
+
+        self.write_log("重启算法")
 
     def buy(
         self,
-        vt_symbol: str,
         price: float,
         volume: float,
         order_type: OrderType = OrderType.LIMIT,
         offset: Offset = Offset.NONE
     ) -> None:
         """"""
-        if not self.active:
+        if self.status != AlgoStatus.RUNNING:
             return
 
-        msg: str = f"委托买入{vt_symbol}：{volume}@{price}"
+        msg: str = f"委托买入{self.vt_symbol}：{volume}@{price}"
         self.write_log(msg)
 
         return self.algo_engine.send_order(
             self,
-            vt_symbol,
             Direction.LONG,
             price,
             volume,
@@ -134,22 +161,20 @@ class AlgoTemplate:
 
     def sell(
         self,
-        vt_symbol: str,
         price: float,
         volume: float,
         order_type: OrderType = OrderType.LIMIT,
         offset: Offset = Offset.NONE
     ) -> None:
         """"""
-        if not self.active:
+        if self.status != AlgoStatus.RUNNING:
             return
 
-        msg: str = f"委托卖出{vt_symbol}：{volume}@{price}"
+        msg: str = f"委托卖出{self.vt_symbol}：{volume}@{price}"
         self.write_log(msg)
 
         return self.algo_engine.send_order(
             self,
-            vt_symbol,
             Direction.SHORT,
             price,
             volume,
@@ -169,13 +194,13 @@ class AlgoTemplate:
         for vt_orderid in self.active_orders.keys():
             self.cancel_order(vt_orderid)
 
-    def get_tick(self, vt_symbol: str) -> Optional[TickData]:
+    def get_tick(self) -> Optional[TickData]:
         """"""
-        return self.algo_engine.get_tick(self, vt_symbol)
+        return self.algo_engine.get_tick(self)
 
-    def get_contract(self, vt_symbol: str) -> Optional[ContractData]:
+    def get_contract(self) -> Optional[ContractData]:
         """"""
-        return self.algo_engine.get_contract(self, vt_symbol)
+        return self.algo_engine.get_contract(self)
 
     def write_log(self, msg: str) -> None:
         """"""
