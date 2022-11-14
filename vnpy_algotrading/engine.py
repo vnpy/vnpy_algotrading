@@ -307,7 +307,7 @@ class AlgoEngine(BaseEngine):
     def put_variables_event(self, algo: AlgoTemplate, variables: dict) -> None:
         """"""
         # 检查算法是否运行结束
-        if algo in self.algos.values() and algo.status in [AlgoStatus.TERMINATED, AlgoStatus.FINISHED]:
+        if algo in self.algos.values() and algo.status in [AlgoStatus.STOPPED, AlgoStatus.FINISHED]:
             self.algos.pop(algo.algo_name)
 
             for algos in self.symbol_algo_map.values():

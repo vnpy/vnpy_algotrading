@@ -13,13 +13,7 @@ class AlgoStatus(Enum):
     """
     Algo status.
     """
-    RUNNING = "运行中"
+    RUNNING = "运行"
     PAUSED = "暂停"
-    TERMINATED = "终止"
+    STOPPED = "停止"
     FINISHED = "结束"
-
-    def is_active(self) -> bool:
-        """
-        Check if the algo is active.
-        """
-        return self == AlgoStatus.RUNNING

@@ -41,7 +41,7 @@ class AlgoTemplate:
 
     def update_tick(self, tick: TickData) -> None:
         """"""
-        if self.status.is_active():
+        if self.status == AlgoStatus.RUNNING:
             self.on_tick(tick)
 
     def update_order(self, order: OrderData) -> None:
@@ -59,7 +59,7 @@ class AlgoTemplate:
 
     def update_timer(self) -> None:
         """"""
-        if self.status.is_active():
+        if self.status == AlgoStatus.RUNNING:
             self.on_timer()
 
     @virtual
@@ -126,7 +126,7 @@ class AlgoTemplate:
 
     def terminate(self) -> None:
         """"""
-        self.status = AlgoStatus.TERMINATED
+        self.status = AlgoStatus.STOPPED
         self.cancel_all()
         self.on_terminate()
         self.put_variables_event()
@@ -158,7 +158,7 @@ class AlgoTemplate:
         offset: Offset = Offset.NONE
     ) -> None:
         """"""
-        if not self.status.is_active():
+        if self.status == AlgoStatus.RUNNING:
             return
 
         msg: str = f"委托买入{self.vt_symbol}：{volume}@{price}"
@@ -181,7 +181,7 @@ class AlgoTemplate:
         offset: Offset = Offset.NONE
     ) -> None:
         """"""
-        if not self.status.is_active():
+        if self.status == AlgoStatus.RUNNING:
             return
 
         msg: str = f"委托卖出{self.vt_symbol}：{volume}@{price}"

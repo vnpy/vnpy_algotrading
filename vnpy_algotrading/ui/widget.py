@@ -299,7 +299,7 @@ class AlgoMonitor(QtWidgets.QTableWidget):
         variables_cell.setText(text)
 
         row: int = self.row(variables_cell)
-        active: bool = variables["status"] not in [AlgoStatus.TERMINATED, AlgoStatus.FINISHED]
+        active: bool = variables["status"] not in [AlgoStatus.STOPPED, AlgoStatus.FINISHED]
 
         if self.mode_active:
             if active:
