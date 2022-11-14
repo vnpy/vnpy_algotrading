@@ -24,7 +24,8 @@ class AlgoTemplate:
         vt_symbol: str,
         direction: Direction,
         offset: Offset,
-        volume: float,
+        price: float,
+        volume: int,
         setting: dict
     ) -> None:
         """构造函数"""
@@ -32,9 +33,10 @@ class AlgoTemplate:
         self.algo_name: str = algo_name
 
         self.vt_symbol: str = vt_symbol
-        self.direction = direction
-        self.offset = offset
-        self.volume = volume
+        self.direction: Direction = direction
+        self.offset: Offset = offset
+        self.price: float = price
+        self.volume: int = volume
 
         self.status: str = AlgoStatus.PAUSED
         self.active_orders: Dict[str, OrderData] = {}  # vt_orderid:order
