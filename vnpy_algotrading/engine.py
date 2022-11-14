@@ -59,18 +59,16 @@ class AlgoEngine(BaseEngine):
     def load_algo_template(self) -> None:
         """载入算法类"""
         from .algos.twap_algo import TwapAlgo
-        from .algos.iceberg_algo import IcebergAlgo
-        from .algos.sniper_algo import SniperAlgo
-        from .algos.stop_algo import StopAlgo
-        from .algos.best_limit_algo import BestLimitAlgo
-        from .algos.dma_algo import DmaAlgo
+#        from .algos.iceberg_algo import IcebergAlgo
+#        from .algos.sniper_algo import SniperAlgo
+#        from .algos.stop_algo import StopAlgo
+#        from .algos.best_limit_algo import BestLimitAlgo
 
         self.add_algo_template(TwapAlgo)
-        self.add_algo_template(IcebergAlgo)
-        self.add_algo_template(SniperAlgo)
-        self.add_algo_template(StopAlgo)
-        self.add_algo_template(BestLimitAlgo)
-        self.add_algo_template(DmaAlgo)
+#        self.add_algo_template(IcebergAlgo)
+#        self.add_algo_template(SniperAlgo)
+#        self.add_algo_template(StopAlgo)
+#        self.add_algo_template(BestLimitAlgo)
 
     def add_algo_template(self, template: AlgoTemplate) -> None:
         """添加算法类"""
@@ -184,7 +182,7 @@ class AlgoEngine(BaseEngine):
         """停止算法"""
         algo: Optional[AlgoTemplate] = self.algos.get(algo_name, None)
         if algo:
-            algo.terminate()
+            algo.stop()
 
     def stop_all(self) -> None:
         """停止全部算法"""
