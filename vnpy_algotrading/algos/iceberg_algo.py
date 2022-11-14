@@ -1,4 +1,4 @@
-from vnpy.trader.constant import Offset, Direction
+from vnpy.trader.constant import Direction
 from vnpy.trader.object import TradeData, OrderData, TickData
 from vnpy.trader.engine import BaseEngine
 
@@ -6,24 +6,13 @@ from ..template import AlgoTemplate
 
 
 class IcebergAlgo(AlgoTemplate):
-    """"""
+    """冰山算法类"""
 
     display_name = "Iceberg 冰山"
 
     default_setting = {
-        "vt_symbol": "",
-        "direction": [Direction.LONG.value, Direction.SHORT.value],
-        "price": 0.0,
-        "volume": 0.0,
         "display_volume": 0.0,
-        "interval": 0,
-        "offset": [
-            Offset.NONE.value,
-            Offset.OPEN.value,
-            Offset.CLOSE.value,
-            Offset.CLOSETODAY.value,
-            Offset.CLOSEYESTERDAY.value
-        ]
+        "interval": 0
     }
 
     variables = [
@@ -39,14 +28,14 @@ class IcebergAlgo(AlgoTemplate):
         vt_symbol: str,
         direction: str,
         offset: str,
+        price: float,
         volume: float,
         setting: dict
     ):
         """"""
-        super().__init__(algo_engine, algo_name, vt_symbol, direction, offset, volume, setting)
+        super().__init__(algo_engine, algo_name, vt_symbol, direction, offset, price, volume, setting)
 
         # 参数
-        self.price = setting["price"]
         self.display_volume = setting["display_volume"]
         self.interval = setting["interval"]
 
@@ -55,21 +44,11 @@ class IcebergAlgo(AlgoTemplate):
         self.vt_orderid = ""
         self.traded = 0
 
-        self.last_tick = None
-
         self.put_parameters_event()
         self.put_variables_event()
 
-    def on_stop(self):
-        """"""
-        self.write_log("停止算法")
-
-    def on_tick(self, tick: TickData):
-        """"""
-        self.last_tick = tick
-
     def on_order(self, order: OrderData):
-        """"""
+        """委托回调"""
         msg = f"委托号：{order.vt_orderid}，委托状态：{order.status.value}"
         self.write_log(msg)
 
@@ -78,17 +57,17 @@ class IcebergAlgo(AlgoTemplate):
             self.put_variables_event()
 
     def on_trade(self, trade: TradeData):
-        """"""
+        """成交回调"""
         self.traded += trade.volume
 
         if self.traded >= self.volume:
             self.write_log(f"已交易数量：{self.traded}，总数量：{self.volume}")
-            self.stop()
+            self.finish()
         else:
             self.put_variables_event()
 
     def on_timer(self):
-        """"""
+        """定时回调"""
         self.timer_count += 1
 
         if self.timer_count < self.interval:
@@ -97,8 +76,8 @@ class IcebergAlgo(AlgoTemplate):
 
         self.timer_count = 0
 
-        contract = self.get_contract()
-        if not contract:
+        tick: TickData = self.get_tick()
+        if not tick:
             return
 
         # 当委托完成后，发起新的委托
@@ -121,12 +100,12 @@ class IcebergAlgo(AlgoTemplate):
         # 否则检查撤单
         else:
             if self.direction == Direction.LONG:
-                if self.last_tick.ask_price_1 <= self.price:
+                if tick.ask_price_1 <= self.price:
                     self.cancel_order(self.vt_orderid)
                     self.vt_orderid = ""
                     self.write_log(u"最新Tick卖一价，低于买入委托价格，之前委托可能丢失，强制撤单")
             else:
-                if self.last_tick.bid_price_1 >= self.price:
+                if tick.bid_price_1 >= self.price:
                     self.cancel_order(self.vt_orderid)
                     self.vt_orderid = ""
                     self.write_log(u"最新Tick买一价，高于卖出委托价格，之前委托可能丢失，强制撤单")
