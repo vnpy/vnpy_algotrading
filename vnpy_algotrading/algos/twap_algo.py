@@ -1,5 +1,5 @@
 from vnpy.trader.utility import round_to
-from vnpy.trader.constant import Offset, Direction
+from vnpy.trader.constant import Direction
 from vnpy.trader.object import TradeData, TickData
 from vnpy.trader.engine import BaseEngine
 
@@ -7,24 +7,13 @@ from ..template import AlgoTemplate
 
 
 class TwapAlgo(AlgoTemplate):
-    """"""
+    """TWAP算法类"""
 
     display_name = "TWAP 时间加权平均"
 
     default_setting = {
-        "vt_symbol": "",
-        "direction": [Direction.LONG.value, Direction.SHORT.value],
-        "price": 0.0,
-        "volume": 0.0,
         "time": 600,
-        "interval": 60,
-        "offset": [
-            Offset.NONE.value,
-            Offset.OPEN.value,
-            Offset.CLOSE.value,
-            Offset.CLOSETODAY.value,
-            Offset.CLOSEYESTERDAY.value
-        ]
+        "interval": 60
     }
 
     variables = [
@@ -62,44 +51,37 @@ class TwapAlgo(AlgoTemplate):
         self.total_count = 0
         self.traded = 0
 
-        self.last_tick = None
-
         self.put_parameters_event()
         self.put_variables_event()
 
-    def on_tick(self, tick: TickData):
-        """"""
-        self.last_tick = tick
-
     def on_trade(self, trade: TradeData):
-        """"""
+        """成交回调"""
         self.traded += trade.volume
 
         if self.traded >= self.volume:
             self.write_log(f"已交易数量：{self.traded}，总数量：{self.volume}")
-            self.stop()
+            self.finish()
         else:
             self.put_variables_event()
 
     def on_timer(self):
-        """"""
+        """定时回调"""
         self.timer_count += 1
         self.total_count += 1
         self.put_variables_event()
 
         if self.total_count >= self.time:
             self.write_log("执行时间已结束，停止算法")
-            self.stop()
+            self.finish()
             return
 
         if self.timer_count < self.interval:
             return
         self.timer_count = 0
 
-        if not self.last_tick:
+        tick: TickData = self.get_tick()
+        if not tick:
             return
-        tick = self.last_tick
-        self.last_tick = None
 
         self.cancel_all()
 
