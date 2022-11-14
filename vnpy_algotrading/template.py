@@ -131,7 +131,7 @@ class AlgoTemplate:
         offset: Offset = Offset.NONE
     ) -> None:
         """买入"""
-        if self.status == AlgoStatus.RUNNING:
+        if self.status != AlgoStatus.RUNNING:
             return
 
         msg: str = f"{self.vt_symbol}，委托买入{order_type.value}，{volume}@{price}"
@@ -154,7 +154,7 @@ class AlgoTemplate:
         offset: Offset = Offset.NONE
     ) -> None:
         """卖出"""
-        if self.status == AlgoStatus.RUNNING:
+        if self.status != AlgoStatus.RUNNING:
             return
 
         msg: str = f"{self.vt_symbol}委托卖出{order_type.value}，{volume}@{price}"
