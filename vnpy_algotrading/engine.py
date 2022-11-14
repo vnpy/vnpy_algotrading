@@ -18,7 +18,8 @@ from vnpy.trader.object import (
     OrderData,
     TickData,
     TradeData,
-    CancelRequest
+    CancelRequest,
+    Exchange
 )
 from vnpy.trader.utility import load_json, save_json, round_to
 
@@ -154,11 +155,7 @@ class AlgoEngine(BaseEngine):
         # 订阅行情
         algos: set = self.symbol_algo_map[algo.vt_symbol]
         if not algos:
-            req: SubscribeRequest = SubscribeRequest(
-                symbol=contract.symbol,
-                exchange=contract.exchange
-            )
-            self.main_engine.subscribe(req, contract.gateway_name)
+            self.subscribe(contract.symbol, contract.exchange, contract.gateway_name)
         algos.add(algo)
 
         # 启动算法
@@ -183,12 +180,20 @@ class AlgoEngine(BaseEngine):
         """"""
         algo: Optional[AlgoTemplate] = self.algos.get(algo_name, None)
         if algo:
-            algo.stop()
+            algo.terminate()
 
     def stop_all(self) -> None:
         """"""
         for algo_name in list(self.algos.keys()):
             self.stop_algo(algo_name)
+
+    def subscribe(self, symbol: str, exchange: Exchange, gateway_name: str) -> None:
+        """"""
+        req: SubscribeRequest = SubscribeRequest(
+            symbol=symbol,
+            exchange=exchange
+        )
+        self.main_engine.subscribe(req, gateway_name)
 
     def send_order(
         self,
@@ -302,7 +307,7 @@ class AlgoEngine(BaseEngine):
     def put_variables_event(self, algo: AlgoTemplate, variables: dict) -> None:
         """"""
         # 检查算法是否运行结束
-        if algo in self.algos.values() and algo.status == AlgoStatus.STOPPED:
+        if algo in self.algos.values() and algo.status in [AlgoStatus.TERMINATED, AlgoStatus.FINISHED]:
             self.algos.pop(algo.algo_name)
 
             for algos in self.symbol_algo_map.values():

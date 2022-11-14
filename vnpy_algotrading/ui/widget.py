@@ -150,7 +150,11 @@ class AlgoWidget(QtWidgets.QWidget):
 
         # 当没有错误发生时启动算法
         for setting in settings:
-            self.algo_engine.start_algo(setting)
+            vt_symbol: str = setting.pop("vt_symbol")
+            direction: Direction = Direction(setting.pop("direction"))
+            offset: Offset = Offset(setting.pop("offset"))
+            volume: float = setting.pop("volume")
+            self.algo_engine.start_algo(vt_symbol, direction, offset, volume, setting)
 
     def get_setting(self) -> dict:
         """获取配置"""
@@ -295,7 +299,7 @@ class AlgoMonitor(QtWidgets.QTableWidget):
         variables_cell.setText(text)
 
         row: int = self.row(variables_cell)
-        active: bool = variables["status"] != AlgoStatus.STOPPED
+        active: bool = variables["status"] not in [AlgoStatus.TERMINATED, AlgoStatus.FINISHED]
 
         if self.mode_active:
             if active:

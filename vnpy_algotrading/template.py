@@ -41,7 +41,7 @@ class AlgoTemplate:
 
     def update_tick(self, tick: TickData) -> None:
         """"""
-        if self.status == AlgoStatus.RUNNING:
+        if self.status.is_active():
             self.on_tick(tick)
 
     def update_order(self, order: OrderData) -> None:
@@ -59,7 +59,7 @@ class AlgoTemplate:
 
     def update_timer(self) -> None:
         """"""
-        if self.status == AlgoStatus.RUNNING:
+        if self.status.is_active():
             self.on_timer()
 
     @virtual
@@ -79,6 +79,11 @@ class AlgoTemplate:
 
     @virtual
     def on_resume(self) -> None:
+        """"""
+        pass
+
+    @virtual
+    def on_terminate(self) -> None:
         """"""
         pass
 
@@ -108,16 +113,25 @@ class AlgoTemplate:
         self.on_start()
         self.put_variables_event()
 
-        self.write_log("启动算法")
+        self.write_log("算法启动")
 
     def stop(self) -> None:
         """"""
-        self.status = AlgoStatus.STOPPED
+        self.status = AlgoStatus.FINISHED
         self.cancel_all()
         self.on_stop()
         self.put_variables_event()
 
-        self.write_log("停止算法")
+        self.write_log("算法结束")
+
+    def terminate(self) -> None:
+        """"""
+        self.status = AlgoStatus.TERMINATED
+        self.cancel_all()
+        self.on_terminate()
+        self.put_variables_event()
+
+        self.write_log("算法停止")
 
     def pause(self) -> None:
         """"""
@@ -126,7 +140,7 @@ class AlgoTemplate:
         self.on_pause()
         self.put_variables_event()
 
-        self.write_log("暂停算法")
+        self.write_log("算法暂停")
 
     def resume(self) -> None:
         """"""
@@ -134,7 +148,7 @@ class AlgoTemplate:
         self.on_resume()
         self.put_variables_event()
 
-        self.write_log("重启算法")
+        self.write_log("算法重启")
 
     def buy(
         self,
@@ -144,7 +158,7 @@ class AlgoTemplate:
         offset: Offset = Offset.NONE
     ) -> None:
         """"""
-        if self.status != AlgoStatus.RUNNING:
+        if not self.status.is_active():
             return
 
         msg: str = f"委托买入{self.vt_symbol}：{volume}@{price}"
@@ -167,7 +181,7 @@ class AlgoTemplate:
         offset: Offset = Offset.NONE
     ) -> None:
         """"""
-        if self.status != AlgoStatus.RUNNING:
+        if not self.status.is_active():
             return
 
         msg: str = f"委托卖出{self.vt_symbol}：{volume}@{price}"

@@ -11,8 +11,15 @@ APP_NAME = "AlgoTrading"
 
 class AlgoStatus(Enum):
     """
-    Order status.
+    Algo status.
     """
     RUNNING = "运行中"
     PAUSED = "暂停"
-    STOPPED = "停止"
+    TERMINATED = "终止"
+    FINISHED = "结束"
+
+    def is_active(self) -> bool:
+        """
+        Check if the algo is active.
+        """
+        return self == AlgoStatus.RUNNING
