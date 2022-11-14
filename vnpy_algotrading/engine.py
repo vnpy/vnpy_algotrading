@@ -18,16 +18,14 @@ from vnpy.trader.object import (
     OrderData,
     TickData,
     TradeData,
-    CancelRequest,
-    Exchange
+    CancelRequest
 )
-from vnpy.trader.utility import load_json, save_json, round_to
+from vnpy.trader.utility import round_to
 
 from .template import AlgoTemplate
 from .base import (
     EVENT_ALGO_LOG,
     EVENT_ALGO_PARAMETERS,
-    EVENT_ALGO_SETTING,
     EVENT_ALGO_VARIABLES,
     APP_NAME,
     AlgoStatus
@@ -35,8 +33,7 @@ from .base import (
 
 
 class AlgoEngine(BaseEngine):
-    """"""
-    setting_filename: str = "algo_trading_setting.json"
+    """算法引擎"""
 
     def __init__(self, main_engine: MainEngine, event_engine: EventEngine) -> None:
         """构造函数"""
@@ -47,22 +44,20 @@ class AlgoEngine(BaseEngine):
         self.orderid_algo_map: dict = {}
 
         self.algo_templates: dict = {}
-        self.algo_settings: dict = {}
 
         self.load_algo_template()
         self.register_event()
 
     def init_engine(self) -> None:
-        """"""
+        """初始化引擎"""
         self.write_log("算法交易引擎启动")
-        self.load_algo_setting()
 
     def close(self) -> None:
-        """"""
+        """关闭引擎"""
         pass
 
     def load_algo_template(self) -> None:
-        """"""
+        """载入算法类"""
         from .algos.twap_algo import TwapAlgo
         from .algos.iceberg_algo import IcebergAlgo
         from .algos.sniper_algo import SniperAlgo
@@ -78,43 +73,30 @@ class AlgoEngine(BaseEngine):
         self.add_algo_template(DmaAlgo)
 
     def add_algo_template(self, template: AlgoTemplate) -> None:
-        """"""
+        """添加算法类"""
         self.algo_templates[template.__name__] = template
 
     def get_algo_template(self) -> dict:
-        """"""
+        """获取算法类"""
         return self.algo_templates
 
-    def load_algo_setting(self) -> None:
-        """"""
-        self.algo_settings: dict = load_json(self.setting_filename)
-
-        for setting_name, setting in self.algo_settings.items():
-            self.put_setting_event(setting_name, setting)
-
-        self.write_log("算法配置载入成功")
-
-    def save_algo_setting(self) -> None:
-        """"""
-        save_json(self.setting_filename, self.algo_settings)
-
     def register_event(self) -> None:
-        """"""
+        """注册事件监听"""
         self.event_engine.register(EVENT_TICK, self.process_tick_event)
         self.event_engine.register(EVENT_TIMER, self.process_timer_event)
         self.event_engine.register(EVENT_ORDER, self.process_order_event)
         self.event_engine.register(EVENT_TRADE, self.process_trade_event)
 
     def process_tick_event(self, event: Event) -> None:
-        """"""
+        """处理行情事件"""
         tick: TickData = event.data
-        algos: Optional[Set[AlgoTemplate]] = self.symbol_algo_map[tick.vt_symbol]
+        algos: Set[AlgoTemplate] = self.symbol_algo_map[tick.vt_symbol]
 
         for algo in algos:
             algo.update_tick(tick)
 
     def process_timer_event(self, event: Event) -> None:
-        """"""
+        """处理定时事件"""
         # 生成列表避免字典改变
         algos: List[AlgoTemplate] = list(self.algos.values())
 
@@ -122,7 +104,7 @@ class AlgoEngine(BaseEngine):
             algo.update_timer()
 
     def process_trade_event(self, event: Event) -> None:
-        """"""
+        """处理成交事件"""
         trade: TradeData = event.data
 
         algo: Optional[AlgoTemplate] = self.orderid_algo_map.get(trade.vt_orderid, None)
@@ -130,15 +112,22 @@ class AlgoEngine(BaseEngine):
             algo.update_trade(trade)
 
     def process_order_event(self, event: Event) -> None:
-        """"""
+        """处理委托事件"""
         order: OrderData = event.data
 
         algo: Optional[AlgoTemplate] = self.orderid_algo_map.get(order.vt_orderid, None)
         if algo:
             algo.update_order(order)
 
-    def start_algo(self, vt_symbol: str, direction: Direction, offset: Offset, volume: float, setting: dict) -> str:
-        """"""
+    def start_algo(
+        self,
+        vt_symbol: str,
+        direction: Direction,
+        offset: Offset,
+        volume: float,
+        setting: dict
+    ) -> str:
+        """启动算法"""
         contract: Optional[ContractData] = self.main_engine.get_contract(vt_symbol)
         if not contract:
             self.write_log(f'算法启动失败，找不到合约：{vt_symbol}')
@@ -155,7 +144,12 @@ class AlgoEngine(BaseEngine):
         # 订阅行情
         algos: set = self.symbol_algo_map[algo.vt_symbol]
         if not algos:
-            self.subscribe(contract.symbol, contract.exchange, contract.gateway_name)
+            req: SubscribeRequest = SubscribeRequest(
+                symbol=contract.symbol,
+                exchange=contract.exchange
+            )
+            self.main_engine.subscribe(req, contract.gateway_name)
+
         algos.add(algo)
 
         # 启动算法
@@ -165,35 +159,27 @@ class AlgoEngine(BaseEngine):
         return algo_name
 
     def pause_algo(self, algo_name: str) -> None:
-        """"""
+        """暂停算法"""
         algo: Optional[AlgoTemplate] = self.algos.get(algo_name, None)
         if algo:
             algo.pause()
 
     def resume_algo(self, algo_name: str) -> None:
-        """"""
+        """恢复算法"""
         algo: Optional[AlgoTemplate] = self.algos.get(algo_name, None)
         if algo:
             algo.resume()
 
     def stop_algo(self, algo_name: str) -> None:
-        """"""
+        """停止算法"""
         algo: Optional[AlgoTemplate] = self.algos.get(algo_name, None)
         if algo:
             algo.terminate()
 
     def stop_all(self) -> None:
-        """"""
+        """停止全部算法"""
         for algo_name in list(self.algos.keys()):
             self.stop_algo(algo_name)
-
-    def subscribe(self, symbol: str, exchange: Exchange, gateway_name: str) -> None:
-        """"""
-        req: SubscribeRequest = SubscribeRequest(
-            symbol=symbol,
-            exchange=exchange
-        )
-        self.main_engine.subscribe(req, gateway_name)
 
     def send_order(
         self,
@@ -204,7 +190,7 @@ class AlgoEngine(BaseEngine):
         order_type: OrderType,
         offset: Offset
     ) -> str:
-        """"""
+        """委托下单"""
         contract: Optional[ContractData] = self.main_engine.get_contract(algo.vt_symbol)
         volume: float = round_to(volume, contract.min_volume)
         if not volume:
@@ -226,7 +212,7 @@ class AlgoEngine(BaseEngine):
         return vt_orderid
 
     def cancel_order(self, algo: AlgoTemplate, vt_orderid: str) -> None:
-        """"""
+        """委托撤单"""
         order: Optional[OrderData] = self.main_engine.get_order(vt_orderid)
 
         if not order:
@@ -237,7 +223,7 @@ class AlgoEngine(BaseEngine):
         self.main_engine.cancel_order(req, order.gateway_name)
 
     def get_tick(self, algo: AlgoTemplate) -> Optional[TickData]:
-        """"""
+        """查询行情"""
         tick: Optional[TickData] = self.main_engine.get_tick(algo.vt_symbol)
 
         if not tick:
@@ -246,7 +232,7 @@ class AlgoEngine(BaseEngine):
         return tick
 
     def get_contract(self, algo: AlgoTemplate) -> Optional[ContractData]:
-        """"""
+        """查询合约"""
         contract: Optional[ContractData] = self.main_engine.get_contract(algo.vt_symbol)
 
         if not contract:
@@ -255,7 +241,7 @@ class AlgoEngine(BaseEngine):
         return contract
 
     def write_log(self, msg: str, algo: AlgoTemplate = None) -> None:
-        """"""
+        """输出日志"""
         if algo:
             msg: str = f"{algo.algo_name}：{msg}"
 
@@ -263,40 +249,8 @@ class AlgoEngine(BaseEngine):
         event: Event = Event(EVENT_ALGO_LOG, data=log)
         self.event_engine.put(event)
 
-    def put_setting_event(self, setting_name: str, setting: dict) -> None:
-        """"""
-        event: Event = Event(EVENT_ALGO_SETTING)
-        event.data = {
-            "setting_name": setting_name,
-            "setting": setting
-        }
-        self.event_engine.put(event)
-
-    def update_algo_setting(self, setting_name: str, setting: dict) -> None:
-        """"""
-        self.algo_settings[setting_name] = setting
-
-        self.save_algo_setting()
-
-        self.put_setting_event(setting_name, setting)
-
-    def remove_algo_setting(self, setting_name: str) -> None:
-        """"""
-        if setting_name not in self.algo_settings:
-            return
-        self.algo_settings.pop(setting_name)
-
-        event: Event = Event(EVENT_ALGO_SETTING)
-        event.data = {
-            "setting_name": setting_name,
-            "setting": None
-        }
-        self.event_engine.put(event)
-
-        self.save_algo_setting()
-
     def put_parameters_event(self, algo: AlgoTemplate, parameters: dict) -> None:
-        """"""
+        """推送算法参数更新"""
         event: Event = Event(EVENT_ALGO_PARAMETERS)
         event.data = {
             "algo_name": algo.algo_name,
@@ -305,7 +259,7 @@ class AlgoEngine(BaseEngine):
         self.event_engine.put(event)
 
     def put_variables_event(self, algo: AlgoTemplate, variables: dict) -> None:
-        """"""
+        """推送算法状态更新"""
         # 检查算法是否运行结束
         if algo in self.algos.values() and algo.status in [AlgoStatus.STOPPED, AlgoStatus.FINISHED]:
             self.algos.pop(algo.algo_name)
