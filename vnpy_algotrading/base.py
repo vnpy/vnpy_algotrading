@@ -10,9 +10,8 @@ APP_NAME = "AlgoTrading"
 
 
 class AlgoStatus(Enum):
-    """
-    Algo status.
-    """
+    """算法状态"""
+
     RUNNING = "运行"
     PAUSED = "暂停"
     STOPPED = "停止"
