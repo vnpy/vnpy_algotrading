@@ -161,8 +161,9 @@ class AlgoWidget(QtWidgets.QWidget):
             vt_symbol: str = setting.pop("vt_symbol")
             direction: Direction = Direction(setting.pop("direction"))
             offset: Offset = Offset(setting.pop("offset"))
+            price: float = setting.pop("price")
             volume: float = setting.pop("volume")
-            self.algo_engine.start_algo(vt_symbol, direction, offset, volume, setting)
+            self.algo_engine.start_algo(vt_symbol, direction, offset, price, volume, setting)
 
     def get_setting(self) -> dict:
         """获取当前配置"""
