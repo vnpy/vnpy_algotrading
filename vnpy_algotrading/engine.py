@@ -9,7 +9,7 @@ from vnpy.trader.event import (
     EVENT_ORDER,
     EVENT_TRADE
 )
-from vnpy.trader.constant import Direction, Offset, OrderType
+from vnpy.trader.constant import Direction, Offset, OrderType, Exchange
 from vnpy.trader.object import (
     SubscribeRequest,
     OrderRequest,
@@ -152,12 +152,7 @@ class AlgoEngine(BaseEngine):
         # 订阅行情
         algos: set = self.symbol_algo_map[algo.vt_symbol]
         if not algos:
-            req: SubscribeRequest = SubscribeRequest(
-                symbol=contract.symbol,
-                exchange=contract.exchange
-            )
-            self.main_engine.subscribe(req, contract.gateway_name)
-
+            self.subscribe(contract.symbol, contract.exchange, contract.gateway_name)
         algos.add(algo)
 
         # 启动算法
@@ -188,6 +183,14 @@ class AlgoEngine(BaseEngine):
         """停止全部算法"""
         for algo_name in list(self.algos.keys()):
             self.stop_algo(algo_name)
+
+    def subscribe(self, symbol: str, exchange: Exchange, gateway_name: str) -> None:
+        """订阅行情"""
+        req: SubscribeRequest = SubscribeRequest(
+            symbol=symbol,
+            exchange=exchange
+        )
+        self.main_engine.subscribe(req, gateway_name)
 
     def send_order(
         self,
