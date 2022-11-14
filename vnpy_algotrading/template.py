@@ -195,8 +195,11 @@ class AlgoTemplate:
 
     def put_parameters_event(self) -> None:
         """推送参数更新"""
+        keys: list = list(self.default_setting.keys())
+        keys.extend(["vt_symbol", "direction", "offset", "price", "volume"])
+
         parameters: dict = {}
-        for name in self.default_setting.keys():
+        for name in keys:
             parameters[name] = getattr(self, name)
 
         self.algo_engine.put_parameters_event(self, parameters)
