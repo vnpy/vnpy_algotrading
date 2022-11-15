@@ -16,7 +16,6 @@ class IcebergAlgo(AlgoTemplate):
     }
 
     variables: list = [
-        "traded",
         "timer_count",
         "vt_orderid"
     ]
@@ -42,7 +41,6 @@ class IcebergAlgo(AlgoTemplate):
         # 变量
         self.timer_count: int = 0
         self.vt_orderid: str = ""
-        self.traded: float = 0
 
         self.put_parameters_event()
         self.put_variables_event()

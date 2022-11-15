@@ -12,10 +12,7 @@ class SniperAlgo(AlgoTemplate):
 
     default_setting: dict = {}
 
-    variables: list = [
-        "traded",
-        "vt_orderid"
-    ]
+    variables: list = ["vt_orderid"]
 
     def __init__(
         self,
@@ -33,7 +30,6 @@ class SniperAlgo(AlgoTemplate):
 
         # 变量
         self.vt_orderid = ""
-        self.traded = 0
 
         self.put_parameters_event()
         self.put_variables_event()

@@ -17,7 +17,6 @@ class TwapAlgo(AlgoTemplate):
     }
 
     variables: list = [
-        "traded",
         "order_volume",
         "timer_count",
         "total_count"
@@ -49,7 +48,6 @@ class TwapAlgo(AlgoTemplate):
 
         self.timer_count: int = 0
         self.total_count: int = 0
-        self.traded: int = 0
 
         self.put_parameters_event()
         self.put_variables_event()

@@ -39,9 +39,11 @@ class AlgoTemplate:
         self.volume: int = volume
 
         self.status: str = AlgoStatus.PAUSED
+        self.traded: float = 0
         self.active_orders: Dict[str, OrderData] = {}  # vt_orderid:order
 
         self.variables.insert(0, "status")
+        self.variables.insert(1, "traded")
 
     def update_tick(self, tick: TickData) -> None:
         """行情数据更新"""

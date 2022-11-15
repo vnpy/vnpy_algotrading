@@ -15,7 +15,6 @@ class StopAlgo(AlgoTemplate):
     }
 
     variables: list = [
-        "traded",
         "vt_orderid",
         "order_status",
     ]
@@ -39,7 +38,6 @@ class StopAlgo(AlgoTemplate):
 
         # 变量
         self.vt_orderid: str = ""
-        self.traded: float = 0
         self.order_status: str = ""
 
         self.put_parameters_event()
