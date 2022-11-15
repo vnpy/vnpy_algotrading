@@ -8,11 +8,11 @@ from ..template import AlgoTemplate
 class SniperAlgo(AlgoTemplate):
     """狙击手算法类"""
 
-    display_name = "Sniper 狙击手"
+    display_name: str = "Sniper 狙击手"
 
-    default_setting = {}
+    default_setting: dict = {}
 
-    variables = [
+    variables: list = [
         "traded",
         "vt_orderid"
     ]
@@ -27,8 +27,8 @@ class SniperAlgo(AlgoTemplate):
         price: float,
         volume: float,
         setting: dict
-    ):
-        """"""
+    ) -> None:
+        """构造函数"""
         super().__init__(algo_engine, algo_name, vt_symbol, direction, offset, price, volume, setting)
 
         # 变量
@@ -38,7 +38,7 @@ class SniperAlgo(AlgoTemplate):
         self.put_parameters_event()
         self.put_variables_event()
 
-    def on_tick(self, tick: TickData):
+    def on_tick(self, tick: TickData) -> None:
         """Tick行情回调"""
         if self.vt_orderid:
             self.cancel_all()
@@ -46,7 +46,7 @@ class SniperAlgo(AlgoTemplate):
 
         if self.direction == Direction.LONG:
             if tick.ask_price_1 <= self.price:
-                order_volume = self.volume - self.traded
+                order_volume: float = self.volume - self.traded
                 order_volume = min(order_volume, tick.ask_volume_1)
 
                 self.vt_orderid = self.buy(
@@ -56,7 +56,7 @@ class SniperAlgo(AlgoTemplate):
                 )
         else:
             if tick.bid_price_1 >= self.price:
-                order_volume = self.volume - self.traded
+                order_volume: float = self.volume - self.traded
                 order_volume = min(order_volume, tick.bid_volume_1)
 
                 self.vt_orderid = self.sell(
@@ -67,13 +67,13 @@ class SniperAlgo(AlgoTemplate):
 
         self.put_variables_event()
 
-    def on_order(self, order: OrderData):
+    def on_order(self, order: OrderData) -> None:
         """委托回调"""
         if not order.is_active():
             self.vt_orderid = ""
             self.put_variables_event()
 
-    def on_trade(self, trade: TradeData):
+    def on_trade(self, trade: TradeData) -> None:
         """成交回调"""
         self.traded += trade.volume
 

@@ -8,14 +8,14 @@ from ..template import AlgoTemplate
 class IcebergAlgo(AlgoTemplate):
     """冰山算法类"""
 
-    display_name = "Iceberg 冰山"
+    display_name: str = "Iceberg 冰山"
 
-    default_setting = {
+    default_setting: dict = {
         "display_volume": 0.0,
         "interval": 0
     }
 
-    variables = [
+    variables: list = [
         "traded",
         "timer_count",
         "vt_orderid"
@@ -31,32 +31,32 @@ class IcebergAlgo(AlgoTemplate):
         price: float,
         volume: float,
         setting: dict
-    ):
-        """"""
+    ) -> None:
+        """构造函数"""
         super().__init__(algo_engine, algo_name, vt_symbol, direction, offset, price, volume, setting)
 
         # 参数
-        self.display_volume = setting["display_volume"]
-        self.interval = setting["interval"]
+        self.display_volume: float = setting["display_volume"]
+        self.interval: int = setting["interval"]
 
         # 变量
-        self.timer_count = 0
-        self.vt_orderid = ""
-        self.traded = 0
+        self.timer_count: int = 0
+        self.vt_orderid: str = ""
+        self.traded: float = 0
 
         self.put_parameters_event()
         self.put_variables_event()
 
-    def on_order(self, order: OrderData):
+    def on_order(self, order: OrderData) -> None:
         """委托回调"""
-        msg = f"委托号：{order.vt_orderid}，委托状态：{order.status.value}"
+        msg: str = f"委托号：{order.vt_orderid}，委托状态：{order.status.value}"
         self.write_log(msg)
 
         if not order.is_active():
             self.vt_orderid = ""
             self.put_variables_event()
 
-    def on_trade(self, trade: TradeData):
+    def on_trade(self, trade: TradeData) -> None:
         """成交回调"""
         self.traded += trade.volume
 
@@ -66,7 +66,7 @@ class IcebergAlgo(AlgoTemplate):
         else:
             self.put_variables_event()
 
-    def on_timer(self):
+    def on_timer(self) -> None:
         """定时回调"""
         self.timer_count += 1
 
@@ -82,7 +82,7 @@ class IcebergAlgo(AlgoTemplate):
 
         # 当委托完成后，发起新的委托
         if not self.vt_orderid:
-            order_volume = self.volume - self.traded
+            order_volume: float = self.volume - self.traded
             order_volume = min(order_volume, self.display_volume)
 
             if self.direction == Direction.LONG:
