@@ -1,6 +1,6 @@
 from vnpy.trader.utility import round_to
 from vnpy.trader.constant import Direction
-from vnpy.trader.object import TradeData, TickData
+from vnpy.trader.object import TradeData, TickData, ContractData
 from vnpy.trader.engine import BaseEngine
 
 from ..template import AlgoTemplate
@@ -9,14 +9,14 @@ from ..template import AlgoTemplate
 class TwapAlgo(AlgoTemplate):
     """TWAP算法类"""
 
-    display_name = "TWAP 时间加权平均"
+    display_name: str = "TWAP 时间加权平均"
 
-    default_setting = {
+    default_setting: dict = {
         "time": 600,
         "interval": 60
     }
 
-    variables = [
+    variables: list = [
         "traded",
         "order_volume",
         "timer_count",
@@ -33,28 +33,28 @@ class TwapAlgo(AlgoTemplate):
         price: float,
         volume: float,
         setting: dict
-    ):
-        """"""
+    ) -> None:
+        """构造函数"""
         super().__init__(algo_engine, algo_name, vt_symbol, direction, offset, price, volume, setting)
 
         # 参数
-        self.time = setting["time"]
-        self.interval = setting["interval"]
+        self.time: int = setting["time"]
+        self.interval: int = setting["interval"]
 
         # 变量
-        self.order_volume = self.volume / (self.time / self.interval)
-        contract = self.get_contract()
+        self.order_volume: int = self.volume / (self.time / self.interval)
+        contract: ContractData = self.get_contract()
         if contract:
             self.order_volume = round_to(self.order_volume, contract.min_volume)
 
-        self.timer_count = 0
-        self.total_count = 0
-        self.traded = 0
+        self.timer_count: int = 0
+        self.total_count: int = 0
+        self.traded: int = 0
 
         self.put_parameters_event()
         self.put_variables_event()
 
-    def on_trade(self, trade: TradeData):
+    def on_trade(self, trade: TradeData) -> None:
         """成交回调"""
         self.traded += trade.volume
 
@@ -64,7 +64,7 @@ class TwapAlgo(AlgoTemplate):
         else:
             self.put_variables_event()
 
-    def on_timer(self):
+    def on_timer(self) -> None:
         """定时回调"""
         self.timer_count += 1
         self.total_count += 1
@@ -85,7 +85,7 @@ class TwapAlgo(AlgoTemplate):
 
         self.cancel_all()
 
-        left_volume = self.volume - self.traded
+        left_volume: int = self.volume - self.traded
         order_volume = min(self.order_volume, left_volume)
 
         if self.direction == Direction.LONG:

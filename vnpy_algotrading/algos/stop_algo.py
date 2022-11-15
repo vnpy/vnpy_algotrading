@@ -8,13 +8,13 @@ from ..template import AlgoTemplate
 class StopAlgo(AlgoTemplate):
     """条件委托算法类"""
 
-    display_name = "Stop 条件委托"
+    display_name: str = "Stop 条件委托"
 
-    default_setting = {
+    default_setting: dict = {
         "price_add": 0.0
     }
 
-    variables = [
+    variables: list = [
         "traded",
         "vt_orderid",
         "order_status",
@@ -30,29 +30,29 @@ class StopAlgo(AlgoTemplate):
         price: float,
         volume: float,
         setting: dict
-    ):
-        """"""
+    ) -> None:
+        """构造函数"""
         super().__init__(algo_engine, algo_name, vt_symbol, direction, offset, price, volume, setting)
 
         # 参数
-        self.price_add = setting["price_add"]
+        self.price_add: float = setting["price_add"]
 
         # 变量
-        self.vt_orderid = ""
-        self.traded = 0
-        self.order_status = ""
+        self.vt_orderid: str = ""
+        self.traded: float = 0
+        self.order_status: str = ""
 
         self.put_parameters_event()
         self.put_variables_event()
 
-    def on_tick(self, tick: TickData):
+    def on_tick(self, tick: TickData) -> None:
         """Tick行情回调"""
         if self.vt_orderid:
             return
 
         if self.direction == Direction.LONG:
             if tick.last_price >= self.price:
-                price = self.price + self.price_add
+                price: float = self.price + self.price_add
 
                 if tick.limit_up:
                     price = min(price, tick.limit_up)
@@ -67,7 +67,7 @@ class StopAlgo(AlgoTemplate):
 
         else:
             if tick.last_price <= self.price:
-                price = self.price - self.price_add
+                price: float = self.price - self.price_add
 
                 if tick.limit_down:
                     price = max(price, tick.limit_down)
@@ -82,7 +82,7 @@ class StopAlgo(AlgoTemplate):
 
         self.put_variables_event()
 
-    def on_order(self, order: OrderData):
+    def on_order(self, order: OrderData) -> None:
         """委托回调"""
         self.traded = order.traded
         self.order_status = order.status
