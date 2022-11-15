@@ -82,7 +82,6 @@ class StopAlgo(AlgoTemplate):
 
     def on_order(self, order: OrderData) -> None:
         """委托回调"""
-        self.traded = order.traded
         self.order_status = order.status
 
         if not order.is_active():

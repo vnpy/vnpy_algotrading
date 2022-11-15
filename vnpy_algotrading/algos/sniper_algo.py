@@ -71,8 +71,6 @@ class SniperAlgo(AlgoTemplate):
 
     def on_trade(self, trade: TradeData) -> None:
         """成交回调"""
-        self.traded += trade.volume
-
         if self.traded >= self.volume:
             self.write_log(f"已交易数量：{self.traded}，总数量：{self.volume}")
             self.finish()
