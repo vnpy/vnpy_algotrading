@@ -3,7 +3,6 @@ from random import uniform
 from vnpy.trader.constant import Direction
 from vnpy.trader.object import TradeData, OrderData, TickData
 from vnpy.trader.engine import BaseEngine
-from vnpy.trader.utility import round_to
 
 from ..template import AlgoTemplate
 
