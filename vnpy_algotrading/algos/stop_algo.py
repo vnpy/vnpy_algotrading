@@ -11,7 +11,6 @@ class StopAlgo(AlgoTemplate):
     display_name = "Stop 条件委托"
 
     default_setting = {
-        "stop_price": 0.0,
         "price_add": 0.0
     }
 
@@ -36,7 +35,6 @@ class StopAlgo(AlgoTemplate):
         super().__init__(algo_engine, algo_name, vt_symbol, direction, offset, price, volume, setting)
 
         # 参数
-        self.stop_price = setting["stop_price"]
         self.price_add = setting["price_add"]
 
         # 变量
@@ -53,8 +51,8 @@ class StopAlgo(AlgoTemplate):
             return
 
         if self.direction == Direction.LONG:
-            if tick.last_price >= self.stop_price:
-                price = self.stop_price + self.price_add
+            if tick.last_price >= self.price:
+                price = self.price + self.price_add
 
                 if tick.limit_up:
                     price = min(price, tick.limit_up)
@@ -65,11 +63,11 @@ class StopAlgo(AlgoTemplate):
                     offset=self.offset
                 )
                 self.write_log(
-                    f"停止单已触发，代码：{self.vt_symbol}，方向：{self.direction}, 价格：{self.stop_price}，数量：{self.volume}，开平：{self.offset}")
+                    f"停止单已触发，代码：{self.vt_symbol}，方向：{self.direction}, 价格：{self.price}，数量：{self.volume}，开平：{self.offset}")
 
         else:
-            if tick.last_price <= self.stop_price:
-                price = self.stop_price - self.price_add
+            if tick.last_price <= self.price:
+                price = self.price - self.price_add
 
                 if tick.limit_down:
                     price = max(price, tick.limit_down)
@@ -80,7 +78,7 @@ class StopAlgo(AlgoTemplate):
                     offset=self.offset
                 )
                 self.write_log(
-                    f"停止单已触发，代码：{self.vt_symbol}，方向：{self.direction}, 价格：{self.stop_price}，数量：{self.volume}，开平：{self.offset}")
+                    f"停止单已触发，代码：{self.vt_symbol}，方向：{self.direction}, 价格：{self.price}，数量：{self.volume}，开平：{self.offset}")
 
         self.put_variables_event()
 
