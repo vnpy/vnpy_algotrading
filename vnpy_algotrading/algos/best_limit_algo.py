@@ -14,16 +14,8 @@ class BestLimitAlgo(AlgoTemplate):
     display_name = "BestLimit 最优限价"
 
     default_setting = {
-        "min_volume": 0.0,
-        "max_volume": 0.0,
-        "volume_change": [
-            "1",
-            "0.1",
-            "0.01",
-            "0.001",
-            "0.0001",
-            "0.00001"
-        ]
+        "min_volume": 0,
+        "max_volume": 0,
     }
 
     variables = [
@@ -49,11 +41,6 @@ class BestLimitAlgo(AlgoTemplate):
         # 参数
         self.min_volume = setting["min_volume"]
         self.max_volume = setting["max_volume"]
-
-        if "." in setting["volume_change"]:
-            self.volume_change = float(setting["volume_change"])
-        else:
-            self.volume_change = int(setting["volume_change"])
 
         # 变量
         self.vt_orderid = ""
@@ -138,8 +125,4 @@ class BestLimitAlgo(AlgoTemplate):
         """随机生成委托数量"""
         rand_volume = uniform(self.min_volume, self.max_volume)
         rand_volume = round_to(rand_volume, self.volume_change)
-
-        if self.volume_change == 1:
-            rand_volume = int(rand_volume)
-
-        return rand_volume
+        return int(rand_volume)
