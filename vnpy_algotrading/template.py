@@ -131,7 +131,7 @@ class AlgoTemplate:
         offset: Offset = Offset.NONE
     ) -> None:
         """买入"""
-        if self.status == AlgoStatus.RUNNING:
+        if self.status != AlgoStatus.RUNNING:
             return
 
         msg: str = f"{self.vt_symbol}，委托买入{order_type.value}，{volume}@{price}"
@@ -154,7 +154,7 @@ class AlgoTemplate:
         offset: Offset = Offset.NONE
     ) -> None:
         """卖出"""
-        if self.status == AlgoStatus.RUNNING:
+        if self.status != AlgoStatus.RUNNING:
             return
 
         msg: str = f"{self.vt_symbol}委托卖出{order_type.value}，{volume}@{price}"
@@ -195,8 +195,11 @@ class AlgoTemplate:
 
     def put_parameters_event(self) -> None:
         """推送参数更新"""
+        keys: list = list(self.default_setting.keys())
+        keys.extend(["vt_symbol", "direction", "offset", "price", "volume"])
+
         parameters: dict = {}
-        for name in self.default_setting.keys():
+        for name in keys:
             parameters[name] = getattr(self, name)
 
         self.algo_engine.put_parameters_event(self, parameters)

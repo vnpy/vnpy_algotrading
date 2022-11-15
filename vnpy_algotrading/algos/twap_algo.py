@@ -30,14 +30,14 @@ class TwapAlgo(AlgoTemplate):
         vt_symbol: str,
         direction: str,
         offset: str,
+        price: float,
         volume: float,
         setting: dict
     ):
         """"""
-        super().__init__(algo_engine, algo_name, vt_symbol, direction, offset, volume, setting)
+        super().__init__(algo_engine, algo_name, vt_symbol, direction, offset, price, volume, setting)
 
         # 参数
-        self.price = setting["price"]
         self.time = setting["time"]
         self.interval = setting["interval"]
 

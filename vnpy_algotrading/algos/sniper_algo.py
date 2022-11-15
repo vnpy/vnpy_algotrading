@@ -1,4 +1,4 @@
-from vnpy.trader.constant import Offset, Direction
+from vnpy.trader.constant import Direction
 from vnpy.trader.object import TradeData, OrderData, TickData
 from vnpy.trader.engine import BaseEngine
 
@@ -6,23 +6,11 @@ from ..template import AlgoTemplate
 
 
 class SniperAlgo(AlgoTemplate):
-    """"""
+    """狙击手算法类"""
 
     display_name = "Sniper 狙击手"
 
-    default_setting = {
-        "vt_symbol": "",
-        "direction": [Direction.LONG.value, Direction.SHORT.value],
-        "price": 0.0,
-        "volume": 0.0,
-        "offset": [
-            Offset.NONE.value,
-            Offset.OPEN.value,
-            Offset.CLOSE.value,
-            Offset.CLOSETODAY.value,
-            Offset.CLOSEYESTERDAY.value
-        ]
-    }
+    default_setting = {}
 
     variables = [
         "traded",
@@ -36,14 +24,12 @@ class SniperAlgo(AlgoTemplate):
         vt_symbol: str,
         direction: str,
         offset: str,
+        price: float,
         volume: float,
         setting: dict
     ):
         """"""
-        super().__init__(algo_engine, algo_name, vt_symbol, direction, offset, volume, setting)
-
-        # 参数
-        self.price = setting["price"]
+        super().__init__(algo_engine, algo_name, vt_symbol, direction, offset, price, volume, setting)
 
         # 变量
         self.vt_orderid = ""
@@ -53,7 +39,7 @@ class SniperAlgo(AlgoTemplate):
         self.put_variables_event()
 
     def on_tick(self, tick: TickData):
-        """"""
+        """Tick行情回调"""
         if self.vt_orderid:
             self.cancel_all()
             return
@@ -82,17 +68,17 @@ class SniperAlgo(AlgoTemplate):
         self.put_variables_event()
 
     def on_order(self, order: OrderData):
-        """"""
+        """委托回调"""
         if not order.is_active():
             self.vt_orderid = ""
             self.put_variables_event()
 
     def on_trade(self, trade: TradeData):
-        """"""
+        """成交回调"""
         self.traded += trade.volume
 
         if self.traded >= self.volume:
             self.write_log(f"已交易数量：{self.traded}，总数量：{self.volume}")
-            self.stop()
+            self.finish()
         else:
             self.put_variables_event()

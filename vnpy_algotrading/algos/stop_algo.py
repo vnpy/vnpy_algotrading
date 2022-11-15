@@ -1,28 +1,18 @@
-from vnpy.trader.constant import Offset, Direction
-from vnpy.trader.object import TradeData, OrderData, TickData
+from vnpy.trader.constant import Direction
+from vnpy.trader.object import OrderData, TickData
 from vnpy.trader.engine import BaseEngine
 
 from ..template import AlgoTemplate
 
 
 class StopAlgo(AlgoTemplate):
-    """"""
+    """条件委托算法类"""
 
     display_name = "Stop 条件委托"
 
     default_setting = {
-        "vt_symbol": "",
-        "direction": [Direction.LONG.value, Direction.SHORT.value],
         "stop_price": 0.0,
-        "volume": 0.0,
-        "price_add": 0.0,
-        "offset": [
-            Offset.NONE.value,
-            Offset.OPEN.value,
-            Offset.CLOSE.value,
-            Offset.CLOSETODAY.value,
-            Offset.CLOSEYESTERDAY.value
-        ]
+        "price_add": 0.0
     }
 
     variables = [
@@ -38,11 +28,12 @@ class StopAlgo(AlgoTemplate):
         vt_symbol: str,
         direction: str,
         offset: str,
+        price: float,
         volume: float,
         setting: dict
     ):
         """"""
-        super().__init__(algo_engine, algo_name, vt_symbol, direction, offset, volume, setting)
+        super().__init__(algo_engine, algo_name, vt_symbol, direction, offset, price, volume, setting)
 
         # 参数
         self.stop_price = setting["stop_price"]
@@ -57,7 +48,7 @@ class StopAlgo(AlgoTemplate):
         self.put_variables_event()
 
     def on_tick(self, tick: TickData):
-        """"""
+        """Tick行情回调"""
         if self.vt_orderid:
             return
 
@@ -94,14 +85,10 @@ class StopAlgo(AlgoTemplate):
         self.put_variables_event()
 
     def on_order(self, order: OrderData):
-        """"""
+        """委托回调"""
         self.traded = order.traded
         self.order_status = order.status
 
         if not order.is_active():
-            self.stop()
+            self.finish()
         self.put_variables_event()
-
-    def on_trade(self, trade: TradeData):
-        """"""
-        pass
