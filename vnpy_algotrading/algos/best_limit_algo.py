@@ -3,6 +3,7 @@ from random import uniform
 from vnpy.trader.constant import Direction
 from vnpy.trader.object import TradeData, OrderData, TickData
 from vnpy.trader.engine import BaseEngine
+from vnpy.trader.utility import round_to
 
 from ..template import AlgoTemplate
 
@@ -18,7 +19,6 @@ class BestLimitAlgo(AlgoTemplate):
     }
 
     variables: list = [
-        "traded",
         "vt_orderid",
         "order_price"
     ]
@@ -43,7 +43,6 @@ class BestLimitAlgo(AlgoTemplate):
 
         # 变量
         self.vt_orderid: str = ""
-        self.traded: float = 0
         self.order_price: float = 0
 
         self.put_parameters_event()
@@ -77,8 +76,6 @@ class BestLimitAlgo(AlgoTemplate):
 
     def on_trade(self, trade: TradeData) -> None:
         """成交回调"""
-        self.traded += trade.volume
-
         if self.traded >= self.volume:
             self.write_log(f"已交易数量：{self.traded}，总数量：{self.volume}")
             self.finish()

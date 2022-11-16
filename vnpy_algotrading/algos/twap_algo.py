@@ -17,7 +17,6 @@ class TwapAlgo(AlgoTemplate):
     }
 
     variables: list = [
-        "traded",
         "order_volume",
         "timer_count",
         "total_count"
@@ -49,15 +48,12 @@ class TwapAlgo(AlgoTemplate):
 
         self.timer_count: int = 0
         self.total_count: int = 0
-        self.traded: int = 0
 
         self.put_parameters_event()
         self.put_variables_event()
 
     def on_trade(self, trade: TradeData) -> None:
         """成交回调"""
-        self.traded += trade.volume
-
         if self.traded >= self.volume:
             self.write_log(f"已交易数量：{self.traded}，总数量：{self.volume}")
             self.finish()

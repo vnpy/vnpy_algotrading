@@ -16,7 +16,6 @@ class IcebergAlgo(AlgoTemplate):
     }
 
     variables: list = [
-        "traded",
         "timer_count",
         "vt_orderid"
     ]
@@ -42,7 +41,6 @@ class IcebergAlgo(AlgoTemplate):
         # 变量
         self.timer_count: int = 0
         self.vt_orderid: str = ""
-        self.traded: float = 0
 
         self.put_parameters_event()
         self.put_variables_event()
@@ -58,8 +56,6 @@ class IcebergAlgo(AlgoTemplate):
 
     def on_trade(self, trade: TradeData) -> None:
         """成交回调"""
-        self.traded += trade.volume
-
         if self.traded >= self.volume:
             self.write_log(f"已交易数量：{self.traded}，总数量：{self.volume}")
             self.finish()

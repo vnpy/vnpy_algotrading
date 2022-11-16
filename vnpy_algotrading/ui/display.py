@@ -8,6 +8,7 @@ NAME_DISPLAY_MAP: dict = {
     "offset": "开平",
     "status": "算法状态",
     "traded": "成交数量",
+    "traded_price": "成交均价",
     "order_volume": "单笔委托",
     "timer_count": "本轮读秒",
     "total_count": "累计读秒",
