@@ -351,10 +351,15 @@ class AlgoMonitor(QtWidgets.QTableWidget):
             name_cell.setTextAlignment(QtCore.Qt.AlignCenter)
 
             vtsymbol_cell: QtWidgets.QTableWidgetItem = QtWidgets.QTableWidgetItem()
+            vtsymbol_cell.setTextAlignment(QtCore.Qt.AlignCenter)
             direction_cell: QtWidgets.QTableWidgetItem = QtWidgets.QTableWidgetItem()
+            direction_cell.setTextAlignment(QtCore.Qt.AlignCenter)
             offset_cell: QtWidgets.QTableWidgetItem = QtWidgets.QTableWidgetItem()
+            offset_cell.setTextAlignment(QtCore.Qt.AlignCenter)
             price_cell: QtWidgets.QTableWidgetItem = QtWidgets.QTableWidgetItem()
+            price_cell.setTextAlignment(QtCore.Qt.AlignCenter)
             volume_cell: QtWidgets.QTableWidgetItem = QtWidgets.QTableWidgetItem()
+            volume_cell.setTextAlignment(QtCore.Qt.AlignCenter)
 
             parameters_cell: QtWidgets.QTableWidgetItem = QtWidgets.QTableWidgetItem()
             variables_cell: QtWidgets.QTableWidgetItem = QtWidgets.QTableWidgetItem()
