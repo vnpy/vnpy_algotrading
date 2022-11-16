@@ -14,7 +14,6 @@ NAME_DISPLAY_MAP: dict = {
     "total_count": "累计读秒",
     "template_name": "算法模板",
     "display_volume": "挂出数量",
-    "stop_price": "触发价格",
     "price_add": "委托超价",
     "step_price": "网格交易间距",
     "step_volume": "网格交易数量",
