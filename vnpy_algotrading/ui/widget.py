@@ -270,27 +270,21 @@ class AlgoMonitor(QtWidgets.QTableWidget):
     def process_algo_event(self, event: Event) -> None:
         """"""
         data: Any = event.data
-
         algo_name: str = data["algo_name"]
         vt_symbol: str = data["vt_symbol"]
         direction: Direction = data["direction"]
         offset: Offset = data["offset"]
         price: float = data["price"]
         volume: float = data["volume"]
+
+        cells: dict = self.get_algo_cells(algo_name, vt_symbol, direction, offset, price, volume)
+
         traded: float = data["traded"]
         traded_price: float = data["traded_price"]
         status: AlgoStatus = data["status"]
-
         parameters: dict = data["parameters"]
         variables: dict = data["variables"]
 
-        cells: dict = self.get_algo_cells(algo_name)
-
-        cells["vt_symbol"].setText(vt_symbol)
-        cells["direction"].setText(direction.value)
-        cells["offset"].setText(offset.value)
-        cells["price"].setText(str(price))
-        cells["volume"].setText(str(volume))
         cells["status"].setText(status.value)
         cells["traded"].setText(str(traded))
         cells["traded_price"].setText(str(traded_price))
@@ -331,7 +325,7 @@ class AlgoMonitor(QtWidgets.QTableWidget):
 
         self.algo_cells[algo_name]["button"] = button
 
-    def get_algo_cells(self, algo_name: str) -> dict:
+    def get_algo_cells(self, algo_name: str, vt_symbol: str, direction: Direction, offset: Offset, price: float, volume: float) -> dict:
         """"""
         cells: Optional[dict] = self.algo_cells.get(algo_name, None)
 
@@ -345,58 +339,33 @@ class AlgoMonitor(QtWidgets.QTableWidget):
             switch_button: QtWidgets.QPushButton = QtWidgets.QPushButton("暂停")
             switch_button.clicked.connect(switch_func)
 
-            name_cell: QtWidgets.QTableWidgetItem = QtWidgets.QTableWidgetItem(algo_name)
-            name_cell.setTextAlignment(QtCore.Qt.AlignCenter)
-
-            vtsymbol_cell: QtWidgets.QTableWidgetItem = QtWidgets.QTableWidgetItem()
-            vtsymbol_cell.setTextAlignment(QtCore.Qt.AlignCenter)
-            direction_cell: QtWidgets.QTableWidgetItem = QtWidgets.QTableWidgetItem()
-            direction_cell.setTextAlignment(QtCore.Qt.AlignCenter)
-            offset_cell: QtWidgets.QTableWidgetItem = QtWidgets.QTableWidgetItem()
-            offset_cell.setTextAlignment(QtCore.Qt.AlignCenter)
-            price_cell: QtWidgets.QTableWidgetItem = QtWidgets.QTableWidgetItem()
-            price_cell.setTextAlignment(QtCore.Qt.AlignCenter)
-            volume_cell: QtWidgets.QTableWidgetItem = QtWidgets.QTableWidgetItem()
-            volume_cell.setTextAlignment(QtCore.Qt.AlignCenter)
-            status_cell: QtWidgets.QTableWidgetItem = QtWidgets.QTableWidgetItem()
-            status_cell.setTextAlignment(QtCore.Qt.AlignCenter)
-            traded_cell: QtWidgets.QTableWidgetItem = QtWidgets.QTableWidgetItem()
-            traded_cell.setTextAlignment(QtCore.Qt.AlignCenter)
-            tradedprice_cell: QtWidgets.QTableWidgetItem = QtWidgets.QTableWidgetItem()
-            tradedprice_cell.setTextAlignment(QtCore.Qt.AlignCenter)
-
             parameters_cell: QtWidgets.QTableWidgetItem = QtWidgets.QTableWidgetItem()
             variables_cell: QtWidgets.QTableWidgetItem = QtWidgets.QTableWidgetItem()
 
             self.insertRow(0)
             self.setCellWidget(0, 0, stop_button)
             self.setCellWidget(0, 1, switch_button)
-            self.setItem(0, 2, name_cell)
-            self.setItem(0, 3, vtsymbol_cell)
-            self.setItem(0, 4, direction_cell)
-            self.setItem(0, 5, offset_cell)
-            self.setItem(0, 6, price_cell)
-            self.setItem(0, 7, volume_cell)
-            self.setItem(0, 8, status_cell)
-            self.setItem(0, 9, traded_cell)
-            self.setItem(0, 10, tradedprice_cell)
             self.setItem(0, 11, parameters_cell)
             self.setItem(0, 12, variables_cell)
 
             cells: dict = {
-                "name": name_cell,
-                "vt_symbol": vtsymbol_cell,
-                "direction": direction_cell,
-                "offset": offset_cell,
-                "price": price_cell,
-                "volume": volume_cell,
-                "traded": traded_cell,
-                "traded_price": tradedprice_cell,
-                "status": status_cell,
                 "parameters": parameters_cell,
                 "variables": variables_cell,
                 "button": switch_button        # 缓存对应algo_name的button进字典便于更新按钮状态
             }
+
+            items: list = [(2, "name", algo_name), (3, "vt_symbol", vt_symbol), (4, "direction", direction.value), (5, "offset", offset.value),
+                           (6, "price", str(price)), (7, "volume", str(volume)), (8, "status", ""), (9, "traded", ""), (10, "traded_price", "")]
+
+            for column, name, content in items:
+                if content:
+                    cell: QtWidgets.QTableWidgetItem = QtWidgets.QTableWidgetItem(content)
+                else:
+                    cell: QtWidgets.QTableWidgetItem = QtWidgets.QTableWidgetItem()
+                cell.setTextAlignment(QtCore.Qt.AlignCenter)
+                self.setItem(0, column, cell)
+                cells[name] = cell
+
             self.algo_cells[algo_name] = cells
 
         return cells
