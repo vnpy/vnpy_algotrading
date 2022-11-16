@@ -2,8 +2,8 @@ from enum import Enum
 
 
 EVENT_ALGO_LOG = "eAlgoLog"
-EVENT_ALGO_VARIABLES = "eAlgoVariables"
-EVENT_ALGO_PARAMETERS = "eAlgoParameters"
+EVENT_ALGO_UPDATE = "eAlgoUpdate"
+
 
 APP_NAME = "AlgoTrading"
 

@@ -12,8 +12,7 @@ from ..engine import (
     AlgoTemplate,
     APP_NAME,
     EVENT_ALGO_LOG,
-    EVENT_ALGO_PARAMETERS,
-    EVENT_ALGO_VARIABLES,
+    EVENT_ALGO_UPDATE,
     AlgoStatus,
     Direction,
     Offset
@@ -205,8 +204,7 @@ class AlgoWidget(QtWidgets.QWidget):
 class AlgoMonitor(QtWidgets.QTableWidget):
     """算法监控组件"""
 
-    parameters_signal: QtCore.pyqtSignal = QtCore.pyqtSignal(Event)
-    variables_signal: QtCore.pyqtSignal = QtCore.pyqtSignal(Event)
+    algo_signal: QtCore.pyqtSignal = QtCore.pyqtSignal(Event)
 
     def __init__(
         self,
@@ -265,24 +263,26 @@ class AlgoMonitor(QtWidgets.QTableWidget):
 
     def register_event(self) -> None:
         """"""
-        self.parameters_signal.connect(self.process_parameters_event)
-        self.variables_signal.connect(self.process_variables_event)
-
+        self.algo_signal.connect(self.process_algo_event)
         self.event_engine.register(
-            EVENT_ALGO_PARAMETERS, self.parameters_signal.emit)
-        self.event_engine.register(
-            EVENT_ALGO_VARIABLES, self.variables_signal.emit)
+            EVENT_ALGO_UPDATE, self.algo_signal.emit)
 
-    def process_parameters_event(self, event: Event) -> None:
+    def process_algo_event(self, event: Event) -> None:
         """"""
         data: Any = event.data
+
         algo_name: str = data["algo_name"]
         vt_symbol: str = data["vt_symbol"]
         direction: Direction = data["direction"]
         offset: Offset = data["offset"]
         price: float = data["price"]
         volume: float = data["volume"]
+        traded: float = data["traded"]
+        traded_price: float = data["traded_price"]
+        status: AlgoStatus = data["status"]
+
         parameters: dict = data["parameters"]
+        variables: dict = data["variables"]
 
         cells: dict = self.get_algo_cells(algo_name)
 
@@ -291,24 +291,12 @@ class AlgoMonitor(QtWidgets.QTableWidget):
         cells["offset"].setText(offset.value)
         cells["price"].setText(str(price))
         cells["volume"].setText(str(volume))
-
-        text: str = to_text(parameters)
-        cells["parameters"].setText(text)
-
-    def process_variables_event(self, event: Event) -> None:
-        """"""
-        data: Any = event.data
-        algo_name: str = data["algo_name"]
-        traded: float = data["traded"]
-        traded_price: float = data["traded_price"]
-        variables: dict = data["variables"]
-        status: AlgoStatus = data["status"]
-
-        cells: dict = self.get_algo_cells(algo_name)
-
         cells["status"].setText(status.value)
         cells["traded"].setText(str(traded))
         cells["traded_price"].setText(str(traded_price))
+
+        text: str = to_text(parameters)
+        cells["parameters"].setText(text)
         variables_cell: Optional[QtWidgets.QTableWidgetItem] = cells["variables"]
         text: str = to_text(variables)
         variables_cell.setText(text)

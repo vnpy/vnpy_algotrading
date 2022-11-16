@@ -45,8 +45,7 @@ class BestLimitAlgo(AlgoTemplate):
         self.vt_orderid: str = ""
         self.order_price: float = 0
 
-        self.put_parameters_event()
-        self.put_variables_event()
+        self.put_event()
 
         # 检查最大/最小挂单量
         if self.min_volume <= 0:
@@ -72,7 +71,7 @@ class BestLimitAlgo(AlgoTemplate):
             elif self.order_price != tick.ask_price_1:
                 self.cancel_all()
 
-        self.put_variables_event()
+        self.put_event()
 
     def on_trade(self, trade: TradeData) -> None:
         """成交回调"""
@@ -80,14 +79,14 @@ class BestLimitAlgo(AlgoTemplate):
             self.write_log(f"已交易数量：{self.traded}，总数量：{self.volume}")
             self.finish()
         else:
-            self.put_variables_event()
+            self.put_event()
 
     def on_order(self, order: OrderData) -> None:
         """委托回调"""
         if not order.is_active():
             self.vt_orderid = ""
             self.order_price = 0
-            self.put_variables_event()
+            self.put_event()
 
     def buy_best_limit(self, bid_price_1: float) -> None:
         """最优限价买入"""

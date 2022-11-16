@@ -40,8 +40,7 @@ class StopAlgo(AlgoTemplate):
         self.vt_orderid: str = ""
         self.order_status: str = ""
 
-        self.put_parameters_event()
-        self.put_variables_event()
+        self.put_event()
 
     def on_tick(self, tick: TickData) -> None:
         """Tick行情回调"""
@@ -78,7 +77,7 @@ class StopAlgo(AlgoTemplate):
                 self.write_log(
                     f"停止单已触发，代码：{self.vt_symbol}，方向：{self.direction}, 价格：{self.price}，数量：{self.volume}，开平：{self.offset}")
 
-        self.put_variables_event()
+        self.put_event()
 
     def on_order(self, order: OrderData) -> None:
         """委托回调"""
@@ -86,4 +85,4 @@ class StopAlgo(AlgoTemplate):
 
         if not order.is_active():
             self.finish()
-        self.put_variables_event()
+        self.put_event()

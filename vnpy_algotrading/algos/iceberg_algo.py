@@ -42,8 +42,7 @@ class IcebergAlgo(AlgoTemplate):
         self.timer_count: int = 0
         self.vt_orderid: str = ""
 
-        self.put_parameters_event()
-        self.put_variables_event()
+        self.put_event()
 
     def on_order(self, order: OrderData) -> None:
         """委托回调"""
@@ -52,7 +51,7 @@ class IcebergAlgo(AlgoTemplate):
 
         if not order.is_active():
             self.vt_orderid = ""
-            self.put_variables_event()
+            self.put_event()
 
     def on_trade(self, trade: TradeData) -> None:
         """成交回调"""
@@ -60,14 +59,14 @@ class IcebergAlgo(AlgoTemplate):
             self.write_log(f"已交易数量：{self.traded}，总数量：{self.volume}")
             self.finish()
         else:
-            self.put_variables_event()
+            self.put_event()
 
     def on_timer(self) -> None:
         """定时回调"""
         self.timer_count += 1
 
         if self.timer_count < self.interval:
-            self.put_variables_event()
+            self.put_event()
             return
 
         self.timer_count = 0
@@ -106,4 +105,4 @@ class IcebergAlgo(AlgoTemplate):
                     self.vt_orderid = ""
                     self.write_log(u"最新Tick买一价，高于卖出委托价格，之前委托可能丢失，强制撤单")
 
-        self.put_variables_event()
+        self.put_event()

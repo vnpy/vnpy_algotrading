@@ -31,8 +31,7 @@ class SniperAlgo(AlgoTemplate):
         # 变量
         self.vt_orderid = ""
 
-        self.put_parameters_event()
-        self.put_variables_event()
+        self.put_event()
 
     def on_tick(self, tick: TickData) -> None:
         """Tick行情回调"""
@@ -61,13 +60,13 @@ class SniperAlgo(AlgoTemplate):
                     offset=self.offset
                 )
 
-        self.put_variables_event()
+        self.put_event()
 
     def on_order(self, order: OrderData) -> None:
         """委托回调"""
         if not order.is_active():
             self.vt_orderid = ""
-            self.put_variables_event()
+            self.put_event()
 
     def on_trade(self, trade: TradeData) -> None:
         """成交回调"""
@@ -75,4 +74,4 @@ class SniperAlgo(AlgoTemplate):
             self.write_log(f"已交易数量：{self.traded}，总数量：{self.volume}")
             self.finish()
         else:
-            self.put_variables_event()
+            self.put_event()
