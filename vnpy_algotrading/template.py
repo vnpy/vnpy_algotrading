@@ -43,10 +43,6 @@ class AlgoTemplate:
         self.traded_price: float = 0
         self.active_orders: Dict[str, OrderData] = {}  # vt_orderid:order
 
-        self.variables.insert(0, "status")
-        self.variables.insert(1, "traded")
-        self.variables.insert(2, "traded_price")
-
     def update_tick(self, tick: TickData) -> None:
         """行情数据更新"""
         if self.status == AlgoStatus.RUNNING:

@@ -32,6 +32,10 @@ from .base import (
 )
 
 
+algo_params: list = ["vt_symbol", "direction", "offset", "price", "volume"]
+algo_variables: list = ["status", "traded", "traded_price"]
+
+
 class AlgoEngine(BaseEngine):
     """算法引擎"""
 
@@ -262,14 +266,13 @@ class AlgoEngine(BaseEngine):
 
     def put_parameters_event(self, algo: AlgoTemplate, parameters: dict) -> None:
         """推送算法参数更新"""
-        params: list = ["vt_symbol", "direction", "offset", "price", "volume"]
         event: Event = Event(EVENT_ALGO_PARAMETERS)
 
         event.data = {
             "algo_name": algo.algo_name,
             "parameters": parameters
         }
-        for i in params:
+        for i in algo_params:
             event.data[i] = getattr(algo, i)
         self.event_engine.put(event)
 
@@ -289,4 +292,6 @@ class AlgoEngine(BaseEngine):
             "algo_name": algo.algo_name,
             "variables": variables
         }
+        for i in algo_variables:
+            event.data[i] = getattr(algo, i)
         self.event_engine.put(event)

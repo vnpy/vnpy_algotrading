@@ -237,8 +237,11 @@ class AlgoMonitor(QtWidgets.QTableWidget):
             "开平",
             "价格",
             "数量",
+            "算法状态",
+            "已成交",
+            "成交均价",
             "参数",
-            "状态"
+            "执行状态"
         ]
         self.setColumnCount(len(labels))
         self.setHorizontalHeaderLabels(labels)
@@ -249,7 +252,7 @@ class AlgoMonitor(QtWidgets.QTableWidget):
             QtWidgets.QHeaderView.ResizeToContents
         )
 
-        for column in range(8, 10):
+        for column in range(11, 13):
             self.horizontalHeader().setSectionResizeMode(
                 column,
                 QtWidgets.QHeaderView.Stretch
@@ -275,19 +278,19 @@ class AlgoMonitor(QtWidgets.QTableWidget):
         data: Any = event.data
         algo_name: str = data["algo_name"]
         vt_symbol: str = data["vt_symbol"]
-        direction: str = data["direction"].value
-        offset: str = data["offset"].value
-        price: str = str(data["price"])
-        volume: str = str(data["volume"])
+        direction: Direction = data["direction"]
+        offset: Offset = data["offset"]
+        price: float = data["price"]
+        volume: float = data["volume"]
         parameters: dict = data["parameters"]
 
         cells: dict = self.get_algo_cells(algo_name)
 
         cells["vt_symbol"].setText(vt_symbol)
-        cells["direction"].setText(direction)
-        cells["offset"].setText(offset)
-        cells["price"].setText(price)
-        cells["volume"].setText(volume)
+        cells["direction"].setText(direction.value)
+        cells["offset"].setText(offset.value)
+        cells["price"].setText(str(price))
+        cells["volume"].setText(str(volume))
 
         text: str = to_text(parameters)
         cells["parameters"].setText(text)
@@ -296,15 +299,22 @@ class AlgoMonitor(QtWidgets.QTableWidget):
         """"""
         data: Any = event.data
         algo_name: str = data["algo_name"]
+        traded: float = data["traded"]
+        traded_price: float = data["traded_price"]
         variables: dict = data["variables"]
+        status: AlgoStatus = data["status"]
 
         cells: dict = self.get_algo_cells(algo_name)
+
+        cells["status"].setText(status.value)
+        cells["traded"].setText(str(traded))
+        cells["traded_price"].setText(str(traded_price))
         variables_cell: Optional[QtWidgets.QTableWidgetItem] = cells["variables"]
         text: str = to_text(variables)
         variables_cell.setText(text)
 
         row: int = self.row(variables_cell)
-        active: bool = variables["status"] not in [AlgoStatus.STOPPED, AlgoStatus.FINISHED]
+        active: bool = status not in [AlgoStatus.STOPPED, AlgoStatus.FINISHED]
 
         if self.mode_active:
             if active:
@@ -360,6 +370,12 @@ class AlgoMonitor(QtWidgets.QTableWidget):
             price_cell.setTextAlignment(QtCore.Qt.AlignCenter)
             volume_cell: QtWidgets.QTableWidgetItem = QtWidgets.QTableWidgetItem()
             volume_cell.setTextAlignment(QtCore.Qt.AlignCenter)
+            status_cell: QtWidgets.QTableWidgetItem = QtWidgets.QTableWidgetItem()
+            status_cell.setTextAlignment(QtCore.Qt.AlignCenter)
+            traded_cell: QtWidgets.QTableWidgetItem = QtWidgets.QTableWidgetItem()
+            traded_cell.setTextAlignment(QtCore.Qt.AlignCenter)
+            tradedprice_cell: QtWidgets.QTableWidgetItem = QtWidgets.QTableWidgetItem()
+            tradedprice_cell.setTextAlignment(QtCore.Qt.AlignCenter)
 
             parameters_cell: QtWidgets.QTableWidgetItem = QtWidgets.QTableWidgetItem()
             variables_cell: QtWidgets.QTableWidgetItem = QtWidgets.QTableWidgetItem()
@@ -373,8 +389,11 @@ class AlgoMonitor(QtWidgets.QTableWidget):
             self.setItem(0, 5, offset_cell)
             self.setItem(0, 6, price_cell)
             self.setItem(0, 7, volume_cell)
-            self.setItem(0, 8, parameters_cell)
-            self.setItem(0, 9, variables_cell)
+            self.setItem(0, 8, status_cell)
+            self.setItem(0, 9, traded_cell)
+            self.setItem(0, 10, tradedprice_cell)
+            self.setItem(0, 11, parameters_cell)
+            self.setItem(0, 12, variables_cell)
 
             cells: dict = {
                 "name": name_cell,
@@ -383,6 +402,9 @@ class AlgoMonitor(QtWidgets.QTableWidget):
                 "offset": offset_cell,
                 "price": price_cell,
                 "volume": volume_cell,
+                "traded": traded_cell,
+                "traded_price": tradedprice_cell,
+                "status": status_cell,
                 "parameters": parameters_cell,
                 "variables": variables_cell,
                 "button": switch_button        # 缓存对应algo_name的button进字典便于更新按钮状态
