@@ -232,6 +232,11 @@ class AlgoMonitor(QtWidgets.QTableWidget):
             "",
             "",
             "算法",
+            "本地代码",
+            "方向",
+            "开平",
+            "价格",
+            "数量",
             "参数",
             "状态"
         ]
@@ -244,7 +249,7 @@ class AlgoMonitor(QtWidgets.QTableWidget):
             QtWidgets.QHeaderView.ResizeToContents
         )
 
-        for column in range(3, 5):
+        for column in range(8, 10):
             self.horizontalHeader().setSectionResizeMode(
                 column,
                 QtWidgets.QHeaderView.Stretch
@@ -269,9 +274,21 @@ class AlgoMonitor(QtWidgets.QTableWidget):
         """"""
         data: Any = event.data
         algo_name: str = data["algo_name"]
+        vt_symbol: str = data["vt_symbol"]
+        direction: str = data["direction"].value
+        offset: str = data["offset"].value
+        price: str = str(data["price"])
+        volume: str = str(data["volume"])
         parameters: dict = data["parameters"]
 
         cells: dict = self.get_algo_cells(algo_name)
+
+        cells["vt_symbol"].setText(vt_symbol)
+        cells["direction"].setText(direction)
+        cells["offset"].setText(offset)
+        cells["price"].setText(price)
+        cells["volume"].setText(volume)
+
         text: str = to_text(parameters)
         cells["parameters"].setText(text)
 
@@ -331,6 +348,14 @@ class AlgoMonitor(QtWidgets.QTableWidget):
             switch_button.clicked.connect(switch_func)
 
             name_cell: QtWidgets.QTableWidgetItem = QtWidgets.QTableWidgetItem(algo_name)
+            name_cell.setTextAlignment(QtCore.Qt.AlignCenter)
+
+            vtsymbol_cell: QtWidgets.QTableWidgetItem = QtWidgets.QTableWidgetItem()
+            direction_cell: QtWidgets.QTableWidgetItem = QtWidgets.QTableWidgetItem()
+            offset_cell: QtWidgets.QTableWidgetItem = QtWidgets.QTableWidgetItem()
+            price_cell: QtWidgets.QTableWidgetItem = QtWidgets.QTableWidgetItem()
+            volume_cell: QtWidgets.QTableWidgetItem = QtWidgets.QTableWidgetItem()
+
             parameters_cell: QtWidgets.QTableWidgetItem = QtWidgets.QTableWidgetItem()
             variables_cell: QtWidgets.QTableWidgetItem = QtWidgets.QTableWidgetItem()
 
@@ -338,11 +363,21 @@ class AlgoMonitor(QtWidgets.QTableWidget):
             self.setCellWidget(0, 0, stop_button)
             self.setCellWidget(0, 1, switch_button)
             self.setItem(0, 2, name_cell)
-            self.setItem(0, 3, parameters_cell)
-            self.setItem(0, 4, variables_cell)
+            self.setItem(0, 3, vtsymbol_cell)
+            self.setItem(0, 4, direction_cell)
+            self.setItem(0, 5, offset_cell)
+            self.setItem(0, 6, price_cell)
+            self.setItem(0, 7, volume_cell)
+            self.setItem(0, 8, parameters_cell)
+            self.setItem(0, 9, variables_cell)
 
             cells: dict = {
                 "name": name_cell,
+                "vt_symbol": vtsymbol_cell,
+                "direction": direction_cell,
+                "offset": offset_cell,
+                "price": price_cell,
+                "volume": volume_cell,
                 "parameters": parameters_cell,
                 "variables": variables_cell,
                 "button": switch_button        # 缓存对应algo_name的button进字典便于更新按钮状态

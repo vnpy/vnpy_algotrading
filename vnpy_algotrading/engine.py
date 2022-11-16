@@ -262,11 +262,15 @@ class AlgoEngine(BaseEngine):
 
     def put_parameters_event(self, algo: AlgoTemplate, parameters: dict) -> None:
         """推送算法参数更新"""
+        params: list = ["vt_symbol", "direction", "offset", "price", "volume"]
         event: Event = Event(EVENT_ALGO_PARAMETERS)
+
         event.data = {
             "algo_name": algo.algo_name,
             "parameters": parameters
         }
+        for i in params:
+            event.data[i] = getattr(algo, i)
         self.event_engine.put(event)
 
     def put_variables_event(self, algo: AlgoTemplate, variables: dict) -> None:
