@@ -25,8 +25,7 @@ from vnpy.trader.utility import round_to
 from .template import AlgoTemplate
 from .base import (
     EVENT_ALGO_LOG,
-    EVENT_ALGO_PARAMETERS,
-    EVENT_ALGO_VARIABLES,
+    EVENT_ALGO_UPDATE,
     APP_NAME,
     AlgoStatus
 )
@@ -260,18 +259,8 @@ class AlgoEngine(BaseEngine):
         event: Event = Event(EVENT_ALGO_LOG, data=log)
         self.event_engine.put(event)
 
-    def put_parameters_event(self, algo: AlgoTemplate, parameters: dict) -> None:
-        """推送算法参数更新"""
-        event: Event = Event(EVENT_ALGO_PARAMETERS)
-        event.data = {
-            "algo_name": algo.algo_name,
-            "parameters": parameters
-        }
-        self.event_engine.put(event)
-
-    def put_variables_event(self, algo: AlgoTemplate, variables: dict) -> None:
-        """推送算法状态更新"""
-        # 检查算法是否运行结束
+    def put_algo_event(self, algo: AlgoTemplate, data: dict) -> None:
+        """推送更新"""
         if algo in self.algos.values() and algo.status in [AlgoStatus.STOPPED, AlgoStatus.FINISHED]:
             self.algos.pop(algo.algo_name)
 
@@ -279,10 +268,5 @@ class AlgoEngine(BaseEngine):
                 if algo in algos:
                     algos.remove(algo)
 
-        # 推送事件
-        event: Event = Event(EVENT_ALGO_VARIABLES)
-        event.data = {
-            "algo_name": algo.algo_name,
-            "variables": variables
-        }
+        event: Event = Event(EVENT_ALGO_UPDATE, data)
         self.event_engine.put(event)

@@ -49,8 +49,7 @@ class TwapAlgo(AlgoTemplate):
         self.timer_count: int = 0
         self.total_count: int = 0
 
-        self.put_parameters_event()
-        self.put_variables_event()
+        self.put_event()
 
     def on_trade(self, trade: TradeData) -> None:
         """成交回调"""
@@ -58,13 +57,13 @@ class TwapAlgo(AlgoTemplate):
             self.write_log(f"已交易数量：{self.traded}，总数量：{self.volume}")
             self.finish()
         else:
-            self.put_variables_event()
+            self.put_event()
 
     def on_timer(self) -> None:
         """定时回调"""
         self.timer_count += 1
         self.total_count += 1
-        self.put_variables_event()
+        self.put_event()
 
         if self.total_count >= self.time:
             self.write_log("执行时间已结束，停止算法")

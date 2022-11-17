@@ -12,8 +12,7 @@ from ..engine import (
     AlgoTemplate,
     APP_NAME,
     EVENT_ALGO_LOG,
-    EVENT_ALGO_PARAMETERS,
-    EVENT_ALGO_VARIABLES,
+    EVENT_ALGO_UPDATE,
     AlgoStatus,
     Direction,
     Offset
@@ -205,8 +204,7 @@ class AlgoWidget(QtWidgets.QWidget):
 class AlgoMonitor(QtWidgets.QTableWidget):
     """算法监控组件"""
 
-    parameters_signal: QtCore.pyqtSignal = QtCore.pyqtSignal(Event)
-    variables_signal: QtCore.pyqtSignal = QtCore.pyqtSignal(Event)
+    algo_signal: QtCore.pyqtSignal = QtCore.pyqtSignal(Event)
 
     def __init__(
         self,
@@ -232,8 +230,16 @@ class AlgoMonitor(QtWidgets.QTableWidget):
             "",
             "",
             "算法",
+            "本地代码",
+            "方向",
+            "开平",
+            "价格",
+            "数量",
+            "算法状态",
+            "已成交",
+            "成交均价",
             "参数",
-            "状态"
+            "执行状态"
         ]
         self.setColumnCount(len(labels))
         self.setHorizontalHeaderLabels(labels)
@@ -244,7 +250,7 @@ class AlgoMonitor(QtWidgets.QTableWidget):
             QtWidgets.QHeaderView.ResizeToContents
         )
 
-        for column in range(3, 5):
+        for column in range(11, 13):
             self.horizontalHeader().setSectionResizeMode(
                 column,
                 QtWidgets.QHeaderView.Stretch
@@ -257,37 +263,40 @@ class AlgoMonitor(QtWidgets.QTableWidget):
 
     def register_event(self) -> None:
         """"""
-        self.parameters_signal.connect(self.process_parameters_event)
-        self.variables_signal.connect(self.process_variables_event)
-
+        self.algo_signal.connect(self.process_algo_event)
         self.event_engine.register(
-            EVENT_ALGO_PARAMETERS, self.parameters_signal.emit)
-        self.event_engine.register(
-            EVENT_ALGO_VARIABLES, self.variables_signal.emit)
+            EVENT_ALGO_UPDATE, self.algo_signal.emit)
 
-    def process_parameters_event(self, event: Event) -> None:
+    def process_algo_event(self, event: Event) -> None:
         """"""
         data: Any = event.data
         algo_name: str = data["algo_name"]
+        vt_symbol: str = data["vt_symbol"]
+        direction: Direction = data["direction"]
+        offset: Offset = data["offset"]
+        price: float = data["price"]
+        volume: float = data["volume"]
+
+        cells: dict = self.get_algo_cells(algo_name, vt_symbol, direction, offset, price, volume)
+
+        traded: float = data["traded"]
+        traded_price: float = data["traded_price"]
+        status: AlgoStatus = data["status"]
         parameters: dict = data["parameters"]
-
-        cells: dict = self.get_algo_cells(algo_name)
-        text: str = to_text(parameters)
-        cells["parameters"].setText(text)
-
-    def process_variables_event(self, event: Event) -> None:
-        """"""
-        data: Any = event.data
-        algo_name: str = data["algo_name"]
         variables: dict = data["variables"]
 
-        cells: dict = self.get_algo_cells(algo_name)
+        cells["status"].setText(status.value)
+        cells["traded"].setText(str(traded))
+        cells["traded_price"].setText(str(traded_price))
+
+        text: str = to_text(parameters)
+        cells["parameters"].setText(text)
         variables_cell: Optional[QtWidgets.QTableWidgetItem] = cells["variables"]
         text: str = to_text(variables)
         variables_cell.setText(text)
 
         row: int = self.row(variables_cell)
-        active: bool = variables["status"] not in [AlgoStatus.STOPPED, AlgoStatus.FINISHED]
+        active: bool = status not in [AlgoStatus.STOPPED, AlgoStatus.FINISHED]
 
         if self.mode_active:
             if active:
@@ -316,7 +325,7 @@ class AlgoMonitor(QtWidgets.QTableWidget):
 
         self.algo_cells[algo_name]["button"] = button
 
-    def get_algo_cells(self, algo_name: str) -> dict:
+    def get_algo_cells(self, algo_name: str, vt_symbol: str, direction: Direction, offset: Offset, price: float, volume: float) -> dict:
         """"""
         cells: Optional[dict] = self.algo_cells.get(algo_name, None)
 
@@ -330,23 +339,33 @@ class AlgoMonitor(QtWidgets.QTableWidget):
             switch_button: QtWidgets.QPushButton = QtWidgets.QPushButton("暂停")
             switch_button.clicked.connect(switch_func)
 
-            name_cell: QtWidgets.QTableWidgetItem = QtWidgets.QTableWidgetItem(algo_name)
             parameters_cell: QtWidgets.QTableWidgetItem = QtWidgets.QTableWidgetItem()
             variables_cell: QtWidgets.QTableWidgetItem = QtWidgets.QTableWidgetItem()
 
             self.insertRow(0)
             self.setCellWidget(0, 0, stop_button)
             self.setCellWidget(0, 1, switch_button)
-            self.setItem(0, 2, name_cell)
-            self.setItem(0, 3, parameters_cell)
-            self.setItem(0, 4, variables_cell)
+            self.setItem(0, 11, parameters_cell)
+            self.setItem(0, 12, variables_cell)
 
             cells: dict = {
-                "name": name_cell,
                 "parameters": parameters_cell,
                 "variables": variables_cell,
                 "button": switch_button        # 缓存对应algo_name的button进字典便于更新按钮状态
             }
+
+            items: list = [(2, "name", algo_name), (3, "vt_symbol", vt_symbol), (4, "direction", direction.value), (5, "offset", offset.value),
+                           (6, "price", str(price)), (7, "volume", str(volume)), (8, "status", ""), (9, "traded", ""), (10, "traded_price", "")]
+
+            for column, name, content in items:
+                if content:
+                    cell: QtWidgets.QTableWidgetItem = QtWidgets.QTableWidgetItem(content)
+                else:
+                    cell: QtWidgets.QTableWidgetItem = QtWidgets.QTableWidgetItem()
+                cell.setTextAlignment(QtCore.Qt.AlignCenter)
+                self.setItem(0, column, cell)
+                cells[name] = cell
+
             self.algo_cells[algo_name] = cells
 
         return cells

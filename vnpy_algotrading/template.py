@@ -43,10 +43,6 @@ class AlgoTemplate:
         self.traded_price: float = 0
         self.active_orders: Dict[str, OrderData] = {}  # vt_orderid:order
 
-        self.variables.insert(0, "status")
-        self.variables.insert(1, "traded")
-        self.variables.insert(2, "traded_price")
-
     def update_tick(self, tick: TickData) -> None:
         """行情数据更新"""
         if self.status == AlgoStatus.RUNNING:
@@ -97,7 +93,7 @@ class AlgoTemplate:
     def start(self) -> None:
         """启动"""
         self.status = AlgoStatus.RUNNING
-        self.put_variables_event()
+        self.put_event()
 
         self.write_log("算法启动")
 
@@ -105,7 +101,7 @@ class AlgoTemplate:
         """停止"""
         self.status = AlgoStatus.STOPPED
         self.cancel_all()
-        self.put_variables_event()
+        self.put_event()
 
         self.write_log("算法停止")
 
@@ -113,21 +109,21 @@ class AlgoTemplate:
         """结束"""
         self.status = AlgoStatus.FINISHED
         self.cancel_all()
-        self.put_variables_event()
+        self.put_event()
 
         self.write_log("算法结束")
 
     def pause(self) -> None:
         """暂停"""
         self.status = AlgoStatus.PAUSED
-        self.put_variables_event()
+        self.put_event()
 
         self.write_log("算法暂停")
 
     def resume(self) -> None:
         """恢复"""
         self.status = AlgoStatus.RUNNING
-        self.put_variables_event()
+        self.put_event()
 
         self.write_log("算法恢复")
 
@@ -197,25 +193,42 @@ class AlgoTemplate:
         """查询合约"""
         return self.algo_engine.get_contract(self)
 
+    def get_parameters(self) -> dict:
+        """获取算法参数"""
+        strategy_parameters: dict = {}
+        for name in self.default_setting.keys():
+            strategy_parameters[name] = getattr(self, name)
+        return strategy_parameters
+
+    def get_variables(self) -> dict:
+        """获取算法变量"""
+        strategy_variables: dict = {}
+        for name in self.variables:
+            strategy_variables[name] = getattr(self, name)
+        return strategy_variables
+
+    def get_data(self) -> dict:
+        """获取算法信息"""
+        algo_data: dict = {
+            "algo_name": self.algo_name,
+            "vt_symbol": self.vt_symbol,
+            "direction": self.direction,
+            "offset": self.offset,
+            "price": self.price,
+            "volume": self.volume,
+            "status": self.status,
+            "traded": self.traded,
+            "traded_price": self.traded_price,
+            "parameters": self.get_parameters(),
+            "variables": self.get_variables()
+        }
+        return algo_data
+
     def write_log(self, msg: str) -> None:
         """输出日志"""
         self.algo_engine.write_log(msg, self)
 
-    def put_parameters_event(self) -> None:
-        """推送参数更新"""
-        keys: list = ["vt_symbol", "direction", "offset", "price", "volume"]
-        keys.extend(self.default_setting.keys())
-
-        parameters: dict = {}
-        for name in keys:
-            parameters[name] = getattr(self, name)
-
-        self.algo_engine.put_parameters_event(self, parameters)
-
-    def put_variables_event(self) -> None:
-        """推送变量更新"""
-        variables: dict = {}
-        for name in self.variables:
-            variables[name] = getattr(self, name)
-
-        self.algo_engine.put_variables_event(self, variables)
+    def put_event(self) -> None:
+        """推送更新"""
+        data: dict = self.get_data()
+        self.algo_engine.put_algo_event(self, data)
