@@ -217,8 +217,9 @@ class AlgoTemplate:
             "price": self.price,
             "volume": self.volume,
             "status": self.status,
-            "traded": self.traded,
             "traded_price": self.traded_price,
+            "traded": self.traded,
+            "nottraded": self.volume - self.traded,
             "parameters": self.get_parameters(),
             "variables": self.get_variables()
         }
