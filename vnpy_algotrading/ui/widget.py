@@ -234,12 +234,13 @@ class AlgoMonitor(QtWidgets.QTableWidget):
             "方向",
             "开平",
             "价格",
-            "数量",
+            "委托数量",
             "算法状态",
-            "已成交",
             "成交均价",
+            "成交数量",
+            "剩余数量",
             "参数",
-            "执行状态"
+            "变量"
         ]
         self.setColumnCount(len(labels))
         self.setHorizontalHeaderLabels(labels)
@@ -250,7 +251,7 @@ class AlgoMonitor(QtWidgets.QTableWidget):
             QtWidgets.QHeaderView.ResizeToContents
         )
 
-        for column in range(11, 13):
+        for column in range(12, 14):
             self.horizontalHeader().setSectionResizeMode(
                 column,
                 QtWidgets.QHeaderView.Stretch
@@ -279,15 +280,17 @@ class AlgoMonitor(QtWidgets.QTableWidget):
 
         cells: dict = self.get_algo_cells(algo_name, vt_symbol, direction, offset, price, volume)
 
-        traded: float = data["traded"]
         traded_price: float = data["traded_price"]
+        traded: float = data["traded"]
+        nottraded: float = data["nottraded"]
         status: AlgoStatus = data["status"]
         parameters: dict = data["parameters"]
         variables: dict = data["variables"]
 
         cells["status"].setText(status.value)
-        cells["traded"].setText(str(traded))
         cells["traded_price"].setText(str(traded_price))
+        cells["traded"].setText(str(traded))
+        cells["nottraded"].setText(str(nottraded))
 
         text: str = to_text(parameters)
         cells["parameters"].setText(text)
@@ -345,8 +348,8 @@ class AlgoMonitor(QtWidgets.QTableWidget):
             self.insertRow(0)
             self.setCellWidget(0, 0, stop_button)
             self.setCellWidget(0, 1, switch_button)
-            self.setItem(0, 11, parameters_cell)
-            self.setItem(0, 12, variables_cell)
+            self.setItem(0, 12, parameters_cell)
+            self.setItem(0, 13, variables_cell)
 
             cells: dict = {
                 "parameters": parameters_cell,
@@ -354,8 +357,8 @@ class AlgoMonitor(QtWidgets.QTableWidget):
                 "button": switch_button        # 缓存对应algo_name的button进字典便于更新按钮状态
             }
 
-            items: list = [(2, "name", algo_name), (3, "vt_symbol", vt_symbol), (4, "direction", direction.value), (5, "offset", offset.value),
-                           (6, "price", str(price)), (7, "volume", str(volume)), (8, "status", ""), (9, "traded", ""), (10, "traded_price", "")]
+            items: list = [(2, "name", algo_name), (3, "vt_symbol", vt_symbol), (4, "direction", direction.value), (5, "offset", offset.value), (6, "price", str(price)),
+                           (7, "volume", str(volume)), (8, "status", ""), (9, "traded_price", ""), (10, "traded", ""), (11, "nottraded", "")]
 
             for column, name, content in items:
                 if content:
