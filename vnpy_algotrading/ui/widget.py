@@ -544,5 +544,5 @@ def to_text(data: dict) -> str:
     for key, value in data.items():
         key: str = NAME_DISPLAY_MAP.get(key, key)
         buf.append(f"{key}：{value}")
-    text: str = "，".join(buf)
+    text: str = "；".join(buf)
     return text
