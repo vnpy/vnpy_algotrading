@@ -1,4 +1,4 @@
-from typing import Dict, Optional
+from typing import Dict, Optional, TYPE_CHECKING
 
 from vnpy.trader.engine import BaseEngine
 from vnpy.trader.object import TickData, OrderData, TradeData, ContractData
@@ -6,6 +6,9 @@ from vnpy.trader.constant import OrderType, Offset, Direction
 from vnpy.trader.utility import virtual
 
 from .base import AlgoStatus
+
+if TYPE_CHECKING:
+    from .engine import AlgoEngine
 
 
 class AlgoTemplate:
@@ -19,7 +22,7 @@ class AlgoTemplate:
 
     def __init__(
         self,
-        algo_engine: BaseEngine,
+        algo_engine: "AlgoEngine",
         algo_name: str,
         vt_symbol: str,
         direction: Direction,
@@ -38,9 +41,10 @@ class AlgoTemplate:
         self.price: float = price
         self.volume: int = volume
 
-        self.status: str = AlgoStatus.PAUSED
+        self.status: AlgoStatus = AlgoStatus.PAUSED
         self.traded: float = 0
         self.traded_price: float = 0
+
         self.active_orders: Dict[str, OrderData] = {}  # vt_orderid:order
 
     def update_tick(self, tick: TickData) -> None:
@@ -217,9 +221,9 @@ class AlgoTemplate:
             "price": self.price,
             "volume": self.volume,
             "status": self.status,
-            "traded_price": self.traded_price,
             "traded": self.traded,
-            "nottraded": self.volume - self.traded,
+            "left": self.volume - self.traded,
+            "traded_price": self.traded_price,
             "parameters": self.get_parameters(),
             "variables": self.get_variables()
         }

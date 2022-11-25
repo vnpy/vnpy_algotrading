@@ -1,5 +1,5 @@
 from collections import defaultdict
-from typing import Dict, List, Optional, Set
+from typing import Dict, List, Optional, Set, Type
 
 from vnpy.event import EventEngine, Event
 from vnpy.trader.engine import BaseEngine, MainEngine
@@ -38,11 +38,11 @@ class AlgoEngine(BaseEngine):
         """构造函数"""
         super().__init__(main_engine, event_engine, APP_NAME)
 
+        self.algo_templates: Dict[str, Type[AlgoTemplate]] = {}
+
         self.algos: Dict[str, AlgoTemplate] = {}
         self.symbol_algo_map: Dict[str, Set[AlgoTemplate]] = defaultdict(set)
-        self.orderid_algo_map: dict = {}
-
-        self.algo_templates: dict = {}
+        self.orderid_algo_map: Dict[str, AlgoTemplate] = {}
 
         self.load_algo_template()
         self.register_event()
@@ -53,7 +53,7 @@ class AlgoEngine(BaseEngine):
 
     def close(self) -> None:
         """关闭引擎"""
-        pass
+        self.stop_all()
 
     def load_algo_template(self) -> None:
         """载入算法类"""
@@ -118,6 +118,7 @@ class AlgoEngine(BaseEngine):
 
     def start_algo(
         self,
+        template_name: str,
         vt_symbol: str,
         direction: Direction,
         offset: Offset,
@@ -131,7 +132,6 @@ class AlgoEngine(BaseEngine):
             self.write_log(f'算法启动失败，找不到合约：{vt_symbol}')
             return ""
 
-        template_name: str = setting["template_name"]
         algo_template: AlgoTemplate = self.algo_templates[template_name]
 
         # 创建算法实例
@@ -261,7 +261,11 @@ class AlgoEngine(BaseEngine):
 
     def put_algo_event(self, algo: AlgoTemplate, data: dict) -> None:
         """推送更新"""
-        if algo in self.algos.values() and algo.status in [AlgoStatus.STOPPED, AlgoStatus.FINISHED]:
+        # 移除运行结束的算法实例
+        if (
+            algo in self.algos.values()
+            and algo.status in [AlgoStatus.STOPPED, AlgoStatus.FINISHED]
+        ):
             self.algos.pop(algo.algo_name)
 
             for algos in self.symbol_algo_map.values():

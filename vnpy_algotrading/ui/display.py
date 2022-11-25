@@ -9,7 +9,7 @@ NAME_DISPLAY_MAP: dict = {
     "status": "算法状态",
     "traded_price": "成交均价",
     "traded": "成交数量",
-    "nottraded": "剩余数量",
+    "left": "剩余数量",
     "order_volume": "单笔委托",
     "timer_count": "本轮读秒",
     "total_count": "累计读秒",
@@ -24,10 +24,8 @@ NAME_DISPLAY_MAP: dict = {
     "spread_up": "价差上限",
     "spread_down": "价差下限",
     "max_pos": "最大持仓",
-
     "start_time": "开始时间",
     "end_time": "结束时间",
-
     "min_volume": "最小委托量",
     "max_volume": "最大委托量",
     "volume_change": "委托量变化"
