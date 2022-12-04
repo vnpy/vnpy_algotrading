@@ -1,7 +1,7 @@
 import csv
 from functools import partial
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, List, Tuple
 
 from vnpy.event import EventEngine, Event
 from vnpy.trader.engine import MainEngine, LogData
@@ -12,29 +12,47 @@ from ..engine import (
     AlgoTemplate,
     APP_NAME,
     EVENT_ALGO_LOG,
-    EVENT_ALGO_PARAMETERS,
-    EVENT_ALGO_VARIABLES,
-    EVENT_ALGO_SETTING
+    EVENT_ALGO_UPDATE,
+    AlgoStatus,
+    Direction,
+    Offset
 )
 from .display import NAME_DISPLAY_MAP
 
 
 class AlgoWidget(QtWidgets.QWidget):
-    """算法交易控件"""
+    """算法启动控件"""
 
     def __init__(
         self,
         algo_engine: AlgoEngine,
         algo_template: AlgoTemplate
     ) -> None:
-        """"""
+        """构造函数"""
         super().__init__()
 
         self.algo_engine: AlgoEngine = algo_engine
         self.template_name: str = algo_template.__name__
-        self.default_setting: dict = algo_template.default_setting
 
-        self.widgets: dict = {}
+        self.default_setting: dict = {
+            "vt_symbol": "",
+            "direction": [
+                Direction.LONG.value,
+                Direction.SHORT.value
+            ],
+            "offset": [
+                Offset.NONE.value,
+                Offset.OPEN.value,
+                Offset.CLOSE.value,
+                Offset.CLOSETODAY.value,
+                Offset.CLOSEYESTERDAY.value
+            ],
+            "price": 0.0,
+            "volume": 0,
+        }
+        self.default_setting.update(algo_template.default_setting)
+
+        self.widgets: Dict[str, QtWidgets.QWidget] = {}
 
         self.init_ui()
 
@@ -66,28 +84,16 @@ class AlgoWidget(QtWidgets.QWidget):
         load_csv_button.clicked.connect(self.load_csv)
         form.addRow(load_csv_button)
 
-        form.addRow(QtWidgets.QLabel(""))
-        form.addRow(QtWidgets.QLabel(""))
-        form.addRow(QtWidgets.QLabel(""))
-
-        self.setting_name_line: str = QtWidgets.QLineEdit()
-        form.addRow("配置名称", self.setting_name_line)
-
-        save_setting_button: QtWidgets.QPushButton = QtWidgets.QPushButton("保存配置")
-        save_setting_button.clicked.connect(self.save_setting)
-        form.addRow(save_setting_button)
-
         for button in [
             start_algo_button,
-            load_csv_button,
-            save_setting_button
+            load_csv_button
         ]:
             button.setFixedHeight(button.sizeHint().height() * 2)
 
         self.setLayout(form)
 
     def load_csv(self) -> None:
-        """"""
+        """加载CSV文件中的算法配置"""
         # 从对话框获取csv地址
         path, type_ = QtWidgets.QFileDialog.getOpenFileName(
             self,
@@ -118,9 +124,7 @@ class AlgoWidget(QtWidgets.QWidget):
 
         for d in reader:
             # 用模版名初始化算法配置
-            setting: dict = {
-                "template_name": self.template_name
-            }
+            setting: dict = {}
 
             # 读取csv文件每行中各个字段内容
             for field_name, tp in self.widgets.items():
@@ -147,11 +151,19 @@ class AlgoWidget(QtWidgets.QWidget):
 
         # 当没有错误发生时启动算法
         for setting in settings:
-            self.algo_engine.start_algo(setting)
+            self.algo_engine.start_algo(
+                template_name=self.template_name,
+                vt_symbol=setting.pop("vt_symbol"),
+                direction=Direction(setting.pop("direction")),
+                offset=Offset(setting.pop("offset")),
+                price=setting.pop("price"),
+                volume=setting.pop("volume"),
+                setting=setting
+            )
 
     def get_setting(self) -> dict:
-        """获取配置"""
-        setting: dict = {"template_name": self.template_name}
+        """获取当前配置"""
+        setting: dict = {}
 
         for field_name, tp in self.widgets.items():
             widget, field_type = tp
@@ -176,38 +188,24 @@ class AlgoWidget(QtWidgets.QWidget):
     def start_algo(self) -> None:
         """启动交易算法"""
         setting: dict = self.get_setting()
-        if setting:
-            self.algo_engine.start_algo(setting)
-
-    def update_setting(self, setting_name: str, setting: dict) -> None:
-        """更新控件配置"""
-        self.setting_name_line.setText(setting_name)
-
-        for name, tp in self.widgets.items():
-            widget, _ = tp
-            value = setting[name]
-
-            if isinstance(widget, QtWidgets.QLineEdit):
-                widget.setText(str(value))
-            elif isinstance(widget, QtWidgets.QComboBox):
-                ix = widget.findText(value)
-                widget.setCurrentIndex(ix)
-
-    def save_setting(self) -> None:
-        """保存算法配置"""
-        setting_name: str = self.setting_name_line.text()
-        if not setting_name:
+        if not setting:
             return
 
-        setting: dict = self.get_setting()
-        if setting:
-            self.algo_engine.update_algo_setting(setting_name, setting)
+        self.algo_engine.start_algo(
+            template_name=self.template_name,
+            vt_symbol=setting.pop("vt_symbol"),
+            direction=Direction(setting.pop("direction")),
+            offset=Offset(setting.pop("offset")),
+            price=setting.pop("price"),
+            volume=setting.pop("volume"),
+            setting=setting
+        )
 
 
 class AlgoMonitor(QtWidgets.QTableWidget):
-    """"""
-    parameters_signal: QtCore.pyqtSignal = QtCore.pyqtSignal(Event)
-    variables_signal: QtCore.pyqtSignal = QtCore.pyqtSignal(Event)
+    """算法监控组件"""
+
+    algo_signal: QtCore.pyqtSignal = QtCore.pyqtSignal(Event)
 
     def __init__(
         self,
@@ -215,7 +213,7 @@ class AlgoMonitor(QtWidgets.QTableWidget):
         event_engine: EventEngine,
         mode_active: bool
     ):
-        """"""
+        """构造函数"""
         super().__init__()
 
         self.algo_engine: AlgoEngine = algo_engine
@@ -228,12 +226,22 @@ class AlgoMonitor(QtWidgets.QTableWidget):
         self.register_event()
 
     def init_ui(self) -> None:
-        """"""
+        """初始化界面"""
         labels: list = [
             "",
+            "",
             "算法",
+            "本地代码",
+            "方向",
+            "开平",
+            "价格",
+            "总数量",
+            "成交量",
+            "剩余量",
+            "成交均价",
+            "状态",
             "参数",
-            "状态"
+            "变量"
         ]
         self.setColumnCount(len(labels))
         self.setHorizontalHeaderLabels(labels)
@@ -244,7 +252,7 @@ class AlgoMonitor(QtWidgets.QTableWidget):
             QtWidgets.QHeaderView.ResizeToContents
         )
 
-        for column in range(2, 4):
+        for column in range(12, 14):
             self.horizontalHeader().setSectionResizeMode(
                 column,
                 QtWidgets.QHeaderView.Stretch
@@ -253,40 +261,48 @@ class AlgoMonitor(QtWidgets.QTableWidget):
 
         if not self.mode_active:
             self.hideColumn(0)
+            self.hideColumn(1)
 
     def register_event(self) -> None:
-        """"""
-        self.parameters_signal.connect(self.process_parameters_event)
-        self.variables_signal.connect(self.process_variables_event)
+        """注册事件监听"""
+        self.algo_signal.connect(self.process_algo_event)
+        self.event_engine.register(EVENT_ALGO_UPDATE, self.algo_signal.emit)
 
-        self.event_engine.register(
-            EVENT_ALGO_PARAMETERS, self.parameters_signal.emit)
-        self.event_engine.register(
-            EVENT_ALGO_VARIABLES, self.variables_signal.emit)
+    def process_algo_event(self, event: Event) -> None:
+        """处理算法更新事件"""
+        data: dict = event.data
 
-    def process_parameters_event(self, event: Event) -> None:
-        """"""
-        data: Any = event.data
+        # 读取算法的标准参数，并获取内容单元格字典
         algo_name: str = data["algo_name"]
+        vt_symbol: str = data["vt_symbol"]
+        direction: Direction = data["direction"]
+        offset: Offset = data["offset"]
+        price: float = data["price"]
+        volume: float = data["volume"]
+
+        cells: dict = self.get_algo_cells(algo_name, vt_symbol, direction, offset, price, volume)
+
+        # 读取算法的标准变量，并更新到内容单元格
+        traded_price: float = data["traded_price"]
+        traded: float = data["traded"]
+        left: float = data["left"]
+        status: AlgoStatus = data["status"]
+
+        cells["status"].setText(status.value)
+        cells["traded_price"].setText(str(traded_price))
+        cells["traded"].setText(str(traded))
+        cells["left"].setText(str(left))
+
+        # 读取算法的自定义参数和变量，并显示到单元格
         parameters: dict = data["parameters"]
+        cells["parameters"].setText(to_text(parameters))
 
-        cells: dict = self.get_algo_cells(algo_name)
-        text: str = to_text(parameters)
-        cells["parameters"].setText(text)
-
-    def process_variables_event(self, event: Event) -> None:
-        """"""
-        data: Any = event.data
-        algo_name: str = data["algo_name"]
         variables: dict = data["variables"]
+        cells["variables"].setText(to_text(variables))
 
-        cells: dict = self.get_algo_cells(algo_name)
-        variables_cell: Optional[QtWidgets.QTableWidgetItem] = cells["variables"]
-        text: str = to_text(variables)
-        variables_cell.setText(text)
-
-        row: int = self.row(variables_cell)
-        active: bool = variables["active"]
+        # 基于显示模式决定是否隐藏
+        row: int = self.row(cells["variables"])
+        active: bool = status not in [AlgoStatus.STOPPED, AlgoStatus.FINISHED]
 
         if self.mode_active:
             if active:
@@ -300,11 +316,32 @@ class AlgoMonitor(QtWidgets.QTableWidget):
                 self.showRow(row)
 
     def stop_algo(self, algo_name: str) -> None:
-        """"""
+        """停止算法"""
         self.algo_engine.stop_algo(algo_name)
 
-    def get_algo_cells(self, algo_name: str) -> dict:
-        """"""
+    def switch(self, algo_name: str) -> None:
+        """算法开关调整"""
+        button: QtWidgets.QPushButton = self.algo_cells[algo_name]["button"]
+
+        if button.text() == "暂停":
+            self.algo_engine.pause_algo(algo_name)
+            button.setText("恢复")
+        else:
+            self.algo_engine.resume_algo(algo_name)
+            button.setText("暂停")
+
+        self.algo_cells[algo_name]["button"] = button
+
+    def get_algo_cells(
+        self,
+        algo_name: str,
+        vt_symbol: str,
+        direction: Direction,
+        offset: Offset,
+        price: float,
+        volume: float
+    ) -> Dict[str, QtWidgets.QTableWidgetItem]:
+        """获取算法对应的单元格字典"""
         cells: Optional[dict] = self.algo_cells.get(algo_name, None)
 
         if not cells:
@@ -312,28 +349,53 @@ class AlgoMonitor(QtWidgets.QTableWidget):
             stop_button: QtWidgets.QPushButton = QtWidgets.QPushButton("停止")
             stop_button.clicked.connect(stop_func)
 
-            name_cell: QtWidgets.QTableWidgetItem = QtWidgets.QTableWidgetItem(algo_name)
+            # 初始化时先设置暂停按钮
+            switch_func = partial(self.switch, algo_name=algo_name)
+            switch_button: QtWidgets.QPushButton = QtWidgets.QPushButton("暂停")
+            switch_button.clicked.connect(switch_func)
+
             parameters_cell: QtWidgets.QTableWidgetItem = QtWidgets.QTableWidgetItem()
             variables_cell: QtWidgets.QTableWidgetItem = QtWidgets.QTableWidgetItem()
 
             self.insertRow(0)
             self.setCellWidget(0, 0, stop_button)
-            self.setItem(0, 1, name_cell)
-            self.setItem(0, 2, parameters_cell)
-            self.setItem(0, 3, variables_cell)
+            self.setCellWidget(0, 1, switch_button)
+            self.setItem(0, 12, parameters_cell)
+            self.setItem(0, 13, variables_cell)
 
-            cells: dict = {
-                "name": name_cell,
+            cells: Dict[str, QtWidgets.QTableWidgetItem] = {
                 "parameters": parameters_cell,
-                "variables": variables_cell
+                "variables": variables_cell,
+                "button": switch_button        # 缓存对应algo_name的button进字典便于更新按钮状态
             }
+
+            items: List[Tuple[int, str, str]] = [
+                (2, "name", algo_name),
+                (3, "vt_symbol", vt_symbol),
+                (4, "direction", direction.value),
+                (5, "offset", offset.value),
+                (6, "price", str(price)),
+                (7, "volume", str(volume)),
+                (8, "traded", ""),
+                (9, "left", ""),
+                (10, "traded_price", ""),
+                (11, "status", ""),
+            ]
+
+            for column, name, content in items:
+                cell: QtWidgets.QTableWidgetItem = QtWidgets.QTableWidgetItem(content)
+                cell.setTextAlignment(QtCore.Qt.AlignCenter)
+
+                self.setItem(0, column, cell)
+                cells[name] = cell
+
             self.algo_cells[algo_name] = cells
 
         return cells
 
 
 class ActiveAlgoMonitor(AlgoMonitor):
-    """监控激活算法"""
+    """活动算法监控组件"""
 
     def __init__(self, algo_engine: AlgoEngine, event_engine: EventEngine) -> None:
         """"""
@@ -341,129 +403,20 @@ class ActiveAlgoMonitor(AlgoMonitor):
 
 
 class InactiveAlgoMonitor(AlgoMonitor):
-    """监控未激活算法"""
+    """结束算法监控组件"""
 
     def __init__(self, algo_engine: AlgoEngine, event_engine: EventEngine) -> None:
         """"""
         super().__init__(algo_engine, event_engine, False)
 
 
-class SettingMonitor(QtWidgets.QTableWidget):
-    """"""
-    setting_signal: QtCore.pyqtSignal = QtCore.pyqtSignal(Event)
-    use_signal: QtCore.pyqtSignal = QtCore.pyqtSignal(dict)
-
-    def __init__(self, algo_engine: AlgoEngine, event_engine: EventEngine) -> None:
-        """"""
-        super().__init__()
-
-        self.algo_engine: AlgoEngine = algo_engine
-        self.event_engine: EventEngine = event_engine
-
-        self.settings: dict = {}
-        self.setting_cells: dict = {}
-
-        self.init_ui()
-        self.register_event()
-
-    def init_ui(self) -> None:
-        """"""
-        labels: list = [
-            "",
-            "",
-            "名称",
-            "配置"
-        ]
-        self.setColumnCount(len(labels))
-        self.setHorizontalHeaderLabels(labels)
-        self.verticalHeader().setVisible(False)
-        self.setEditTriggers(self.NoEditTriggers)
-
-        self.verticalHeader().setSectionResizeMode(
-            QtWidgets.QHeaderView.ResizeToContents
-        )
-
-        self.horizontalHeader().setSectionResizeMode(
-            3,
-            QtWidgets.QHeaderView.Stretch
-        )
-        self.setWordWrap(True)
-
-    def register_event(self) -> None:
-        """"""
-        self.setting_signal.connect(self.process_setting_event)
-
-        self.event_engine.register(
-            EVENT_ALGO_SETTING, self.setting_signal.emit)
-
-    def process_setting_event(self, event: Event) -> None:
-        """"""
-        data: Any = event.data
-        setting_name: str = data["setting_name"]
-        setting: dict = data["setting"]
-        cells: dict = self.get_setting_cells(setting_name)
-
-        if setting:
-            self.settings[setting_name] = setting
-
-            cells["setting"].setText(to_text(setting))
-        else:
-            if setting_name in self.settings:
-                self.settings.pop(setting_name)
-
-            row: int = self.row(cells["setting"])
-            self.removeRow(row)
-
-            self.setting_cells.pop(setting_name)
-
-    def get_setting_cells(self, setting_name: str) -> dict:
-        """"""
-        cells: Optional[dict] = self.setting_cells.get(setting_name, None)
-
-        if not cells:
-            use_func = partial(self.use_setting, setting_name=setting_name)
-            use_button: QtWidgets.QPushButton = QtWidgets.QPushButton("使用")
-            use_button.clicked.connect(use_func)
-
-            remove_func = partial(self.remove_setting,
-                                  setting_name=setting_name)
-            remove_button: QtWidgets.QPushButton = QtWidgets.QPushButton("移除")
-            remove_button.clicked.connect(remove_func)
-
-            name_cell: QtWidgets.QTableWidgetItem = QtWidgets.QTableWidgetItem(setting_name)
-            setting_cell: QtWidgets.QTableWidgetItem = QtWidgets.QTableWidgetItem()
-
-            self.insertRow(0)
-            self.setCellWidget(0, 0, use_button)
-            self.setCellWidget(0, 1, remove_button)
-            self.setItem(0, 2, name_cell)
-            self.setItem(0, 3, setting_cell)
-
-            cells: dict = {
-                "name": name_cell,
-                "setting": setting_cell
-            }
-            self.setting_cells[setting_name] = cells
-
-        return cells
-
-    def use_setting(self, setting_name: str) -> None:
-        """"""
-        setting: dict = self.settings[setting_name]
-        setting["setting_name"] = setting_name
-        self.use_signal.emit(setting)
-
-    def remove_setting(self, setting_name: str) -> None:
-        """"""
-        self.algo_engine.remove_algo_setting(setting_name)
-
-
 class LogMonitor(QtWidgets.QTableWidget):
-    """"""
+    """日志组件"""
+
     signal: QtCore.pyqtSignal = QtCore.pyqtSignal(Event)
 
     def __init__(self, event_engine: EventEngine) -> None:
-        """"""
+        """构造函数"""
         super().__init__()
 
         self.event_engine: EventEngine = event_engine
@@ -472,34 +425,27 @@ class LogMonitor(QtWidgets.QTableWidget):
         self.register_event()
 
     def init_ui(self) -> None:
-        """"""
+        """初始化界面"""
         labels: list = [
             "时间",
             "信息"
         ]
         self.setColumnCount(len(labels))
         self.setHorizontalHeaderLabels(labels)
-        self.verticalHeader().setVisible(False)
         self.setEditTriggers(self.NoEditTriggers)
-
-        self.verticalHeader().setSectionResizeMode(
-            QtWidgets.QHeaderView.ResizeToContents
-        )
-
-        self.horizontalHeader().setSectionResizeMode(
-            1,
-            QtWidgets.QHeaderView.Stretch
-        )
+        self.verticalHeader().setVisible(False)
+        self.verticalHeader().setSectionResizeMode(QtWidgets.QHeaderView.ResizeToContents)
+        self.horizontalHeader().setSectionResizeMode(1, QtWidgets.QHeaderView.Stretch)
         self.setWordWrap(True)
 
     def register_event(self) -> None:
-        """"""
+        """注册事件监听"""
         self.signal.connect(self.process_log_event)
 
         self.event_engine.register(EVENT_ALGO_LOG, self.signal.emit)
 
     def process_log_event(self, event: Event) -> None:
-        """"""
+        """处理日志事件"""
         log: LogData = event.data
         msg: str = log.msg
         timestamp: str = datetime.now().strftime("%H:%M:%S")
@@ -513,7 +459,7 @@ class LogMonitor(QtWidgets.QTableWidget):
 
 
 class AlgoManager(QtWidgets.QWidget):
-    """"""
+    """算法交易管理控件"""
 
     def __init__(self, main_engine: MainEngine, event_engine: EventEngine) -> None:
         """"""
@@ -578,19 +524,13 @@ class AlgoManager(QtWidgets.QWidget):
         tab2: QtWidgets.QTabWidget = QtWidgets.QTabWidget()
         tab2.addTab(log_monitor, "日志")
 
-        setting_monitor: SettingMonitor = SettingMonitor(self.algo_engine, self.event_engine)
-        setting_monitor.use_signal.connect(self.use_setting)
-        tab3: QtWidgets.QTabWidget = QtWidgets.QTabWidget()
-        tab3.addTab(setting_monitor, "配置")
-
-        grid: QtWidgets.QGridLayout = QtWidgets.QGridLayout()
-        grid.addWidget(tab1, 0, 0, 1, 2)
-        grid.addWidget(tab2, 1, 0)
-        grid.addWidget(tab3, 1, 1)
+        vbox2: QtWidgets.QVBoxLayout = QtWidgets.QVBoxLayout()
+        vbox2.addWidget(tab1)
+        vbox2.addWidget(tab2)
 
         hbox2: QtWidgets.QHBoxLayout = QtWidgets.QHBoxLayout()
         hbox2.addLayout(vbox)
-        hbox2.addLayout(grid)
+        hbox2.addLayout(vbox2)
         self.setLayout(hbox2)
 
         self.show_algo_widget()
@@ -606,18 +546,6 @@ class AlgoManager(QtWidgets.QWidget):
             else:
                 widget.hide()
 
-    def use_setting(self, setting: dict) -> None:
-        """"""
-        setting_name: str = setting["setting_name"]
-        template_name: str = setting["template_name"]
-
-        widget: AlgoWidget = self.algo_widgets[template_name]
-        widget.update_setting(setting_name, setting)
-
-        ix: int = self.template_combo.findData(template_name)
-        self.template_combo.setCurrentIndex(ix)
-        self.show_algo_widget()
-
     def show(self) -> None:
         """"""
         self.showMaximized()
@@ -628,6 +556,6 @@ def to_text(data: dict) -> str:
     buf: list = []
     for key, value in data.items():
         key: str = NAME_DISPLAY_MAP.get(key, key)
-        buf.append(f"{key}：{value}")
-    text: str = "，".join(buf)
+        buf.append(f"{key}:{value}")
+    text: str = ";".join(buf)
     return text

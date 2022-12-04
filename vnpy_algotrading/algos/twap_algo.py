@@ -1,34 +1,22 @@
 from vnpy.trader.utility import round_to
-from vnpy.trader.constant import Offset, Direction
-from vnpy.trader.object import TradeData, TickData
+from vnpy.trader.constant import Direction
+from vnpy.trader.object import TradeData, TickData, ContractData
 from vnpy.trader.engine import BaseEngine
 
 from ..template import AlgoTemplate
 
 
 class TwapAlgo(AlgoTemplate):
-    """"""
+    """TWAP算法类"""
 
-    display_name = "TWAP 时间加权平均"
+    display_name: str = "TWAP 时间加权平均"
 
-    default_setting = {
-        "vt_symbol": "",
-        "direction": [Direction.LONG.value, Direction.SHORT.value],
-        "price": 0.0,
-        "volume": 0.0,
+    default_setting: dict = {
         "time": 600,
-        "interval": 60,
-        "offset": [
-            Offset.NONE.value,
-            Offset.OPEN.value,
-            Offset.CLOSE.value,
-            Offset.CLOSETODAY.value,
-            Offset.CLOSEYESTERDAY.value
-        ]
+        "interval": 60
     }
 
-    variables = [
-        "traded",
+    variables: list = [
         "order_volume",
         "timer_count",
         "total_count"
@@ -38,80 +26,66 @@ class TwapAlgo(AlgoTemplate):
         self,
         algo_engine: BaseEngine,
         algo_name: str,
+        vt_symbol: str,
+        direction: str,
+        offset: str,
+        price: float,
+        volume: float,
         setting: dict
-    ):
-        """"""
-        super().__init__(algo_engine, algo_name, setting)
+    ) -> None:
+        """构造函数"""
+        super().__init__(algo_engine, algo_name, vt_symbol, direction, offset, price, volume, setting)
 
         # 参数
-        self.vt_symbol = setting["vt_symbol"]
-        self.direction = Direction(setting["direction"])
-        self.price = setting["price"]
-        self.volume = setting["volume"]
-        self.time = setting["time"]
-        self.interval = setting["interval"]
-        self.offset = Offset(setting["offset"])
+        self.time: int = setting["time"]
+        self.interval: int = setting["interval"]
 
         # 变量
-        self.order_volume = self.volume / (self.time / self.interval)
-        contract = self.get_contract(self.vt_symbol)
+        self.order_volume: int = self.volume / (self.time / self.interval)
+        contract: ContractData = self.get_contract()
         if contract:
             self.order_volume = round_to(self.order_volume, contract.min_volume)
 
-        self.timer_count = 0
-        self.total_count = 0
-        self.traded = 0
+        self.timer_count: int = 0
+        self.total_count: int = 0
 
-        self.last_tick = None
+        self.put_event()
 
-        self.subscribe(self.vt_symbol)
-        self.put_parameters_event()
-        self.put_variables_event()
-
-    def on_tick(self, tick: TickData):
-        """"""
-        self.last_tick = tick
-
-    def on_trade(self, trade: TradeData):
-        """"""
-        self.traded += trade.volume
-
+    def on_trade(self, trade: TradeData) -> None:
+        """成交回调"""
         if self.traded >= self.volume:
             self.write_log(f"已交易数量：{self.traded}，总数量：{self.volume}")
-            self.stop()
+            self.finish()
         else:
-            self.put_variables_event()
+            self.put_event()
 
-    def on_timer(self):
-        """"""
+    def on_timer(self) -> None:
+        """定时回调"""
         self.timer_count += 1
         self.total_count += 1
-        self.put_variables_event()
+        self.put_event()
 
         if self.total_count >= self.time:
             self.write_log("执行时间已结束，停止算法")
-            self.stop()
+            self.finish()
             return
 
         if self.timer_count < self.interval:
             return
         self.timer_count = 0
 
-        if not self.last_tick:
+        tick: TickData = self.get_tick()
+        if not tick:
             return
-        tick = self.last_tick
-        self.last_tick = None
 
         self.cancel_all()
 
-        left_volume = self.volume - self.traded
+        left_volume: int = self.volume - self.traded
         order_volume = min(self.order_volume, left_volume)
 
         if self.direction == Direction.LONG:
             if tick.ask_price_1 <= self.price:
-                self.buy(self.vt_symbol, self.price,
-                         order_volume, offset=self.offset)
+                self.buy(self.price, order_volume, offset=self.offset)
         else:
             if tick.bid_price_1 >= self.price:
-                self.sell(self.vt_symbol, self.price,
-                          order_volume, offset=self.offset)
+                self.sell(self.price, order_volume, offset=self.offset)

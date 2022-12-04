@@ -1,48 +1,59 @@
-from typing import Dict, Optional
+from typing import Dict, Optional, TYPE_CHECKING
 
 from vnpy.trader.engine import BaseEngine
 from vnpy.trader.object import TickData, OrderData, TradeData, ContractData
 from vnpy.trader.constant import OrderType, Offset, Direction
 from vnpy.trader.utility import virtual
 
+from .base import AlgoStatus
+
+if TYPE_CHECKING:
+    from .engine import AlgoEngine
+
 
 class AlgoTemplate:
-    """"""
-    _count: int = 0
-    display_name: str = ""
-    default_setting: dict = {}
-    variables: list = []
+    """算法模板"""
+
+    _count: int = 0                 # 实例计数
+
+    display_name: str = ""          # 显示名称
+    default_setting: dict = {}      # 默认参数
+    variables: list = []            # 变量名称
 
     def __init__(
         self,
-        algo_engine: BaseEngine,
+        algo_engine: "AlgoEngine",
         algo_name: str,
+        vt_symbol: str,
+        direction: Direction,
+        offset: Offset,
+        price: float,
+        volume: int,
         setting: dict
     ) -> None:
         """构造函数"""
         self.algo_engine: BaseEngine = algo_engine
         self.algo_name: str = algo_name
 
-        self.active: bool = False
+        self.vt_symbol: str = vt_symbol
+        self.direction: Direction = direction
+        self.offset: Offset = offset
+        self.price: float = price
+        self.volume: int = volume
+
+        self.status: AlgoStatus = AlgoStatus.PAUSED
+        self.traded: float = 0
+        self.traded_price: float = 0
+
         self.active_orders: Dict[str, OrderData] = {}  # vt_orderid:order
 
-        self.variables.insert(0, "active")
-
-    @classmethod
-    def new(cls, algo_engine: BaseEngine, setting: dict) -> "AlgoTemplate":
-        """创建一个新的算法实例"""
-        cls._count += 1
-        algo_name: str = f"{cls.__name__}_{cls._count}"
-        algo: AlgoTemplate = cls(algo_engine, algo_name, setting)
-        return algo
-
     def update_tick(self, tick: TickData) -> None:
-        """"""
-        if self.active:
+        """行情数据更新"""
+        if self.status == AlgoStatus.RUNNING:
             self.on_tick(tick)
 
     def update_order(self, order: OrderData) -> None:
-        """"""
+        """委托数据更新"""
         if order.is_active():
             self.active_orders[order.vt_orderid] = order
         elif order.vt_orderid in self.active_orders:
@@ -51,80 +62,91 @@ class AlgoTemplate:
         self.on_order(order)
 
     def update_trade(self, trade: TradeData) -> None:
-        """"""
+        """成交数据更新"""
+        cost: float = self.traded_price * self.traded + trade.price * trade.volume
+        self.traded += trade.volume
+        self.traded_price = cost / self.traded
+
         self.on_trade(trade)
 
     def update_timer(self) -> None:
-        """"""
-        if self.active:
+        """每秒定时更新"""
+        if self.status == AlgoStatus.RUNNING:
             self.on_timer()
-
-    def on_start(self) -> None:
-        """"""
-        pass
-
-    @virtual
-    def on_stop(self) -> None:
-        """"""
-        pass
 
     @virtual
     def on_tick(self, tick: TickData) -> None:
-        """"""
+        """行情回调"""
         pass
 
     @virtual
     def on_order(self, order: OrderData) -> None:
-        """"""
+        """委托回调"""
         pass
 
     @virtual
     def on_trade(self, trade: TradeData) -> None:
-        """"""
+        """成交回调"""
         pass
 
     @virtual
     def on_timer(self) -> None:
-        """"""
+        """定时回调"""
         pass
 
     def start(self) -> None:
-        """"""
-        self.active = True
-        self.on_start()
-        self.put_variables_event()
+        """启动"""
+        self.status = AlgoStatus.RUNNING
+        self.put_event()
+
+        self.write_log("算法启动")
 
     def stop(self) -> None:
-        """"""
-        self.active = False
+        """停止"""
+        self.status = AlgoStatus.STOPPED
         self.cancel_all()
-        self.on_stop()
-        self.put_variables_event()
+        self.put_event()
 
-        self.write_log("停止算法")
+        self.write_log("算法停止")
 
-    def subscribe(self, vt_symbol: str) -> None:
-        """"""
-        self.algo_engine.subscribe(self, vt_symbol)
+    def finish(self) -> None:
+        """结束"""
+        self.status = AlgoStatus.FINISHED
+        self.cancel_all()
+        self.put_event()
+
+        self.write_log("算法结束")
+
+    def pause(self) -> None:
+        """暂停"""
+        self.status = AlgoStatus.PAUSED
+        self.put_event()
+
+        self.write_log("算法暂停")
+
+    def resume(self) -> None:
+        """恢复"""
+        self.status = AlgoStatus.RUNNING
+        self.put_event()
+
+        self.write_log("算法恢复")
 
     def buy(
         self,
-        vt_symbol: str,
         price: float,
         volume: float,
         order_type: OrderType = OrderType.LIMIT,
         offset: Offset = Offset.NONE
     ) -> None:
-        """"""
-        if not self.active:
+        """买入"""
+        if self.status != AlgoStatus.RUNNING:
             return
 
-        msg: str = f"委托买入{vt_symbol}：{volume}@{price}"
+        msg: str = f"{self.vt_symbol}，委托买入{order_type.value}，{volume}@{price}"
         self.write_log(msg)
 
         return self.algo_engine.send_order(
             self,
-            vt_symbol,
             Direction.LONG,
             price,
             volume,
@@ -134,22 +156,20 @@ class AlgoTemplate:
 
     def sell(
         self,
-        vt_symbol: str,
         price: float,
         volume: float,
         order_type: OrderType = OrderType.LIMIT,
         offset: Offset = Offset.NONE
     ) -> None:
-        """"""
-        if not self.active:
+        """卖出"""
+        if self.status != AlgoStatus.RUNNING:
             return
 
-        msg: str = f"委托卖出{vt_symbol}：{volume}@{price}"
+        msg: str = f"{self.vt_symbol}委托卖出{order_type.value}，{volume}@{price}"
         self.write_log(msg)
 
         return self.algo_engine.send_order(
             self,
-            vt_symbol,
             Direction.SHORT,
             price,
             volume,
@@ -158,41 +178,62 @@ class AlgoTemplate:
         )
 
     def cancel_order(self, vt_orderid: str) -> None:
-        """"""
+        """撤销委托"""
         self.algo_engine.cancel_order(self, vt_orderid)
 
     def cancel_all(self) -> None:
-        """"""
+        """全撤委托"""
         if not self.active_orders:
             return
 
         for vt_orderid in self.active_orders.keys():
             self.cancel_order(vt_orderid)
 
-    def get_tick(self, vt_symbol: str) -> Optional[TickData]:
-        """"""
-        return self.algo_engine.get_tick(self, vt_symbol)
+    def get_tick(self) -> Optional[TickData]:
+        """查询行情"""
+        return self.algo_engine.get_tick(self)
 
-    def get_contract(self, vt_symbol: str) -> Optional[ContractData]:
-        """"""
-        return self.algo_engine.get_contract(self, vt_symbol)
+    def get_contract(self) -> Optional[ContractData]:
+        """查询合约"""
+        return self.algo_engine.get_contract(self)
+
+    def get_parameters(self) -> dict:
+        """获取算法参数"""
+        strategy_parameters: dict = {}
+        for name in self.default_setting.keys():
+            strategy_parameters[name] = getattr(self, name)
+        return strategy_parameters
+
+    def get_variables(self) -> dict:
+        """获取算法变量"""
+        strategy_variables: dict = {}
+        for name in self.variables:
+            strategy_variables[name] = getattr(self, name)
+        return strategy_variables
+
+    def get_data(self) -> dict:
+        """获取算法信息"""
+        algo_data: dict = {
+            "algo_name": self.algo_name,
+            "vt_symbol": self.vt_symbol,
+            "direction": self.direction,
+            "offset": self.offset,
+            "price": self.price,
+            "volume": self.volume,
+            "status": self.status,
+            "traded": self.traded,
+            "left": self.volume - self.traded,
+            "traded_price": self.traded_price,
+            "parameters": self.get_parameters(),
+            "variables": self.get_variables()
+        }
+        return algo_data
 
     def write_log(self, msg: str) -> None:
-        """"""
+        """输出日志"""
         self.algo_engine.write_log(msg, self)
 
-    def put_parameters_event(self) -> None:
-        """"""
-        parameters: dict = {}
-        for name in self.default_setting.keys():
-            parameters[name] = getattr(self, name)
-
-        self.algo_engine.put_parameters_event(self, parameters)
-
-    def put_variables_event(self) -> None:
-        """"""
-        variables: dict = {}
-        for name in self.variables:
-            variables[name] = getattr(self, name)
-
-        self.algo_engine.put_variables_event(self, variables)
+    def put_event(self) -> None:
+        """推送更新"""
+        data: dict = self.get_data()
+        self.algo_engine.put_algo_event(self, data)
