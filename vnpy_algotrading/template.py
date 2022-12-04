@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 class AlgoTemplate:
     """算法模板"""
 
-    _count: int = 0                 # 算法实例的计数
+    _count: int = 0                 # 实例计数
 
     display_name: str = ""          # 显示名称
     default_setting: dict = {}      # 默认参数
