@@ -1,5 +1,5 @@
 from vnpy.trader.constant import Direction
-from vnpy.trader.object import OrderData, TickData
+from vnpy.trader.object import OrderData, TickData, TradeData
 from vnpy.trader.engine import BaseEngine
 
 from ..template import AlgoTemplate
@@ -82,7 +82,10 @@ class StopAlgo(AlgoTemplate):
     def on_order(self, order: OrderData) -> None:
         """委托回调"""
         self.order_status = order.status
+        self.put_event()
 
-        if not order.is_active():
+    def on_trade(self, trade: TradeData) -> None:
+        """成交回调"""
+        if self.traded == self.volume:
             self.finish()
         self.put_event()
