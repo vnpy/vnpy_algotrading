@@ -87,7 +87,7 @@ class AlgoEngine(BaseEngine):
     def process_tick_event(self, event: Event) -> None:
         """处理行情事件"""
         tick: TickData = event.data
-        algos: Set[AlgoTemplate] = self.symbol_algo_map[tick.vt_symbol]
+        algos: Set[AlgoTemplate] = self.symbol_algo_map[tick.vt_symbol].copy()
 
         for algo in algos:
             algo.update_tick(tick)
