@@ -202,9 +202,12 @@ class AlgoEngine(BaseEngine):
     ) -> str:
         """委托下单"""
         contract: Optional[ContractData] = self.main_engine.get_contract(algo.vt_symbol)
+
         volume: float = round_to(volume, contract.min_volume)
         if not volume:
             return ""
+
+        price = round_to(price, contract.pricetick)
 
         req: OrderRequest = OrderRequest(
             symbol=contract.symbol,
