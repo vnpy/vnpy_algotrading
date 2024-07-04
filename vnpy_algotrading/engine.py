@@ -105,9 +105,8 @@ class AlgoEngine(BaseEngine):
         trade: TradeData = event.data
 
         algo: Optional[AlgoTemplate] = self.orderid_algo_map.get(trade.vt_orderid, None)
-        algos: List[AlgoTemplate] = list(self.algos.values())
 
-        if algo and algo in algos:
+        if algo and algo.status in {AlgoStatus.RUNNING, AlgoStatus.PAUSED}:
             algo.update_trade(trade)
 
     def process_order_event(self, event: Event) -> None:
@@ -115,9 +114,8 @@ class AlgoEngine(BaseEngine):
         order: OrderData = event.data
 
         algo: Optional[AlgoTemplate] = self.orderid_algo_map.get(order.vt_orderid, None)
-        algos: List[AlgoTemplate] = list(self.algos.values())
 
-        if algo and algo in algos:
+        if algo and algo.status in {AlgoStatus.RUNNING, AlgoStatus.PAUSED}:
             algo.update_order(order)
 
     def start_algo(
@@ -268,7 +266,7 @@ class AlgoEngine(BaseEngine):
         # 移除运行结束的算法实例
         if (
             algo in self.algos.values()
-            and algo.status in [AlgoStatus.STOPPED, AlgoStatus.FINISHED]
+            and algo.status in {AlgoStatus.STOPPED, AlgoStatus.FINISHED}
         ):
             self.algos.pop(algo.algo_name)
 
