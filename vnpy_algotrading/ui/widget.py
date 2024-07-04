@@ -1,7 +1,7 @@
 import csv
 from functools import partial
 from datetime import datetime
-from typing import Any, Dict, Optional, List, Tuple
+from typing import Optional
 
 from vnpy.event import EventEngine, Event
 from vnpy.trader.engine import MainEngine, LogData
@@ -52,7 +52,7 @@ class AlgoWidget(QtWidgets.QWidget):
         }
         self.default_setting.update(algo_template.default_setting)
 
-        self.widgets: Dict[str, QtWidgets.QWidget] = {}
+        self.widgets: dict[str, QtWidgets.QWidget] = {}
 
         self.init_ui()
 
@@ -63,7 +63,7 @@ class AlgoWidget(QtWidgets.QWidget):
         form: QtWidgets.QFormLayout = QtWidgets.QFormLayout()
 
         for field_name, field_value in self.default_setting.items():
-            field_type: Any = type(field_value)
+            field_type: object = type(field_value)
 
             if field_type == list:
                 widget: QtWidgets.QComboBox = QtWidgets.QComboBox()
@@ -105,10 +105,10 @@ class AlgoWidget(QtWidgets.QWidget):
         if not path:
             return
 
-        # 创建csv DictReader
+        # 创建csv dictReader
         with open(path, "r") as f:
             buf: list = [line for line in f]
-            reader: csv.DictReader = csv.DictReader(buf)
+            reader: csv.dictReader = csv.dictReader(buf)
 
         # 检查csv文件是否有字段缺失
         for field_name in self.widgets.keys():
@@ -128,7 +128,7 @@ class AlgoWidget(QtWidgets.QWidget):
 
             # 读取csv文件每行中各个字段内容
             for field_name, tp in self.widgets.items():
-                field_type: Any = tp[-1]
+                field_type: object = tp[-1]
                 field_text: str = d[field_name]
 
                 if field_type == list:
@@ -171,7 +171,7 @@ class AlgoWidget(QtWidgets.QWidget):
                 field_value: str = str(widget.currentText())
             else:
                 try:
-                    field_value: Any = field_type(widget.text())
+                    field_value: object = field_type(widget.text())
                 except ValueError:
                     display_name: str = NAME_DISPLAY_MAP.get(field_name, field_name)
                     QtWidgets.QMessageBox.warning(
@@ -340,7 +340,7 @@ class AlgoMonitor(QtWidgets.QTableWidget):
         offset: Offset,
         price: float,
         volume: float
-    ) -> Dict[str, QtWidgets.QTableWidgetItem]:
+    ) -> dict[str, QtWidgets.QTableWidgetItem]:
         """获取算法对应的单元格字典"""
         cells: Optional[dict] = self.algo_cells.get(algo_name, None)
 
@@ -363,13 +363,13 @@ class AlgoMonitor(QtWidgets.QTableWidget):
             self.setItem(0, 12, parameters_cell)
             self.setItem(0, 13, variables_cell)
 
-            cells: Dict[str, QtWidgets.QTableWidgetItem] = {
+            cells: dict[str, QtWidgets.QTableWidgetItem] = {
                 "parameters": parameters_cell,
                 "variables": variables_cell,
                 "button": switch_button        # 缓存对应algo_name的button进字典便于更新按钮状态
             }
 
-            items: List[Tuple[int, str, str]] = [
+            items: list[tuple[int, str, str]] = [
                 (2, "name", algo_name),
                 (3, "vt_symbol", vt_symbol),
                 (4, "direction", direction.value),
@@ -469,7 +469,7 @@ class AlgoManager(QtWidgets.QWidget):
         self.event_engine: EventEngine = event_engine
         self.algo_engine: AlgoEngine = main_engine.get_engine(APP_NAME)
 
-        self.algo_widgets: Dict[str, AlgoWidget] = {}
+        self.algo_widgets: dict[str, AlgoWidget] = {}
 
         self.init_ui()
         self.algo_engine.init_engine()
@@ -538,7 +538,7 @@ class AlgoManager(QtWidgets.QWidget):
     def show_algo_widget(self) -> None:
         """"""
         ix: int = self.template_combo.currentIndex()
-        current_name: Any = self.template_combo.itemData(ix)
+        current_name: object = self.template_combo.itemData(ix)
 
         for template_name, widget in self.algo_widgets.items():
             if template_name == current_name:

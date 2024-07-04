@@ -1,4 +1,4 @@
-from typing import Dict, Optional, TYPE_CHECKING
+from typing import Optional, TYPE_CHECKING
 
 from vnpy.trader.engine import BaseEngine
 from vnpy.trader.object import TickData, OrderData, TradeData, ContractData
@@ -45,7 +45,7 @@ class AlgoTemplate:
         self.traded: float = 0
         self.traded_price: float = 0
 
-        self.active_orders: Dict[str, OrderData] = {}  # vt_orderid:order
+        self.active_orders: dict[str, OrderData] = {}  # vt_orderid:order
 
     def update_tick(self, tick: TickData) -> None:
         """行情数据更新"""

@@ -1,5 +1,5 @@
 from collections import defaultdict
-from typing import Dict, List, Optional, Set, Type
+from typing import Optional, Type
 
 from vnpy.event import EventEngine, Event
 from vnpy.trader.engine import BaseEngine, MainEngine
@@ -38,11 +38,11 @@ class AlgoEngine(BaseEngine):
         """构造函数"""
         super().__init__(main_engine, event_engine, APP_NAME)
 
-        self.algo_templates: Dict[str, Type[AlgoTemplate]] = {}
+        self.algo_templates: dict[str, Type[AlgoTemplate]] = {}
 
-        self.algos: Dict[str, AlgoTemplate] = {}
-        self.symbol_algo_map: Dict[str, Set[AlgoTemplate]] = defaultdict(set)
-        self.orderid_algo_map: Dict[str, AlgoTemplate] = {}
+        self.algos: dict[str, AlgoTemplate] = {}
+        self.symbol_algo_map: dict[str, set[AlgoTemplate]] = defaultdict(set)
+        self.orderid_algo_map: dict[str, AlgoTemplate] = {}
 
         self.load_algo_template()
         self.register_event()
@@ -87,7 +87,7 @@ class AlgoEngine(BaseEngine):
     def process_tick_event(self, event: Event) -> None:
         """处理行情事件"""
         tick: TickData = event.data
-        algos: Set[AlgoTemplate] = self.symbol_algo_map[tick.vt_symbol]
+        algos: set[AlgoTemplate] = self.symbol_algo_map[tick.vt_symbol]
 
         for algo in algos:
             algo.update_tick(tick)
@@ -95,7 +95,7 @@ class AlgoEngine(BaseEngine):
     def process_timer_event(self, event: Event) -> None:
         """处理定时事件"""
         # 生成列表避免字典改变
-        algos: List[AlgoTemplate] = list(self.algos.values())
+        algos: list[AlgoTemplate] = list(self.algos.values())
 
         for algo in algos:
             algo.update_timer()
