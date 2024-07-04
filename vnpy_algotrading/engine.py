@@ -105,7 +105,9 @@ class AlgoEngine(BaseEngine):
         trade: TradeData = event.data
 
         algo: Optional[AlgoTemplate] = self.orderid_algo_map.get(trade.vt_orderid, None)
-        if algo:
+        algos: List[AlgoTemplate] = list(self.algos.values())
+
+        if algo and algo in algos:
             algo.update_trade(trade)
 
     def process_order_event(self, event: Event) -> None:
@@ -113,7 +115,9 @@ class AlgoEngine(BaseEngine):
         order: OrderData = event.data
 
         algo: Optional[AlgoTemplate] = self.orderid_algo_map.get(order.vt_orderid, None)
-        if algo:
+        algos: List[AlgoTemplate] = list(self.algos.values())
+
+        if algo and algo in algos:
             algo.update_order(order)
 
     def start_algo(
