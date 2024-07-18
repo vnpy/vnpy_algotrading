@@ -108,7 +108,7 @@ class AlgoWidget(QtWidgets.QWidget):
         # 创建csv dictReader
         with open(path, "r") as f:
             buf: list = [line for line in f]
-            reader: csv.dictReader = csv.dictReader(buf)
+            reader: csv.DictReader = csv.DictReader(buf)
 
         # 检查csv文件是否有字段缺失
         for field_name in self.widgets.keys():
