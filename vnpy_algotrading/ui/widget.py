@@ -246,16 +246,16 @@ class AlgoMonitor(QtWidgets.QTableWidget):
         self.setColumnCount(len(labels))
         self.setHorizontalHeaderLabels(labels)
         self.verticalHeader().setVisible(False)
-        self.setEditTriggers(self.NoEditTriggers)
+        self.setEditTriggers(self.EditTrigger.NoEditTriggers)
 
         self.verticalHeader().setSectionResizeMode(
-            QtWidgets.QHeaderView.ResizeToContents
+            QtWidgets.QHeaderView.ResizeMode.ResizeToContents
         )
 
         for column in range(12, 14):
             self.horizontalHeader().setSectionResizeMode(
                 column,
-                QtWidgets.QHeaderView.Stretch
+                QtWidgets.QHeaderView.ResizeMode.Stretch
             )
         self.setWordWrap(True)
 
@@ -384,7 +384,7 @@ class AlgoMonitor(QtWidgets.QTableWidget):
 
             for column, name, content in items:
                 cell: QtWidgets.QTableWidgetItem = QtWidgets.QTableWidgetItem(content)
-                cell.setTextAlignment(QtCore.Qt.AlignCenter)
+                cell.setTextAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
 
                 self.setItem(0, column, cell)
                 cells[name] = cell
@@ -432,10 +432,10 @@ class LogMonitor(QtWidgets.QTableWidget):
         ]
         self.setColumnCount(len(labels))
         self.setHorizontalHeaderLabels(labels)
-        self.setEditTriggers(self.NoEditTriggers)
+        self.setEditTriggers(self.EditTrigger.NoEditTriggers)
         self.verticalHeader().setVisible(False)
-        self.verticalHeader().setSectionResizeMode(QtWidgets.QHeaderView.ResizeToContents)
-        self.horizontalHeader().setSectionResizeMode(1, QtWidgets.QHeaderView.Stretch)
+        self.verticalHeader().setSectionResizeMode(QtWidgets.QHeaderView.ResizeMode.ResizeToContents)
+        self.horizontalHeader().setSectionResizeMode(1, QtWidgets.QHeaderView.ResizeMode.Stretch)
         self.setWordWrap(True)
 
     def register_event(self) -> None:
