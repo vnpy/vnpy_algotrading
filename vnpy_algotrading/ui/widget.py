@@ -205,7 +205,7 @@ class AlgoWidget(QtWidgets.QWidget):
 class AlgoMonitor(QtWidgets.QTableWidget):
     """算法监控组件"""
 
-    algo_signal: QtCore.pyqtSignal = QtCore.pyqtSignal(Event)
+    algo_signal: QtCore.Signal = QtCore.Signal(Event)
 
     def __init__(
         self,
@@ -413,7 +413,7 @@ class InactiveAlgoMonitor(AlgoMonitor):
 class LogMonitor(QtWidgets.QTableWidget):
     """日志组件"""
 
-    signal: QtCore.pyqtSignal = QtCore.pyqtSignal(Event)
+    signal: QtCore.Signal = QtCore.Signal(Event)
 
     def __init__(self, event_engine: EventEngine) -> None:
         """构造函数"""
