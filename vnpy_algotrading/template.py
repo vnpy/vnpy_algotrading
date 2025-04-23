@@ -3,7 +3,6 @@ from typing import TYPE_CHECKING
 from vnpy.trader.engine import BaseEngine
 from vnpy.trader.object import TickData, OrderData, TradeData, ContractData
 from vnpy.trader.constant import OrderType, Offset, Direction
-from vnpy.trader.utility import virtual
 
 from .base import AlgoStatus
 
