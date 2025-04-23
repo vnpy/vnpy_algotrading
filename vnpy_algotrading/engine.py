@@ -1,5 +1,4 @@
 from collections import defaultdict
-from typing import Optional, Type
 
 from vnpy.event import EventEngine, Event
 from vnpy.trader.engine import BaseEngine, MainEngine
@@ -38,7 +37,7 @@ class AlgoEngine(BaseEngine):
         """构造函数"""
         super().__init__(main_engine, event_engine, APP_NAME)
 
-        self.algo_templates: dict[str, Type[AlgoTemplate]] = {}
+        self.algo_templates: dict[str, type[AlgoTemplate]] = {}
 
         self.algos: dict[str, AlgoTemplate] = {}
         self.symbol_algo_map: dict[str, set[AlgoTemplate]] = defaultdict(set)
@@ -104,7 +103,7 @@ class AlgoEngine(BaseEngine):
         """处理成交事件"""
         trade: TradeData = event.data
 
-        algo: Optional[AlgoTemplate] = self.orderid_algo_map.get(trade.vt_orderid, None)
+        algo: AlgoTemplate | None = self.orderid_algo_map.get(trade.vt_orderid, None)
 
         if algo and algo.status in {AlgoStatus.RUNNING, AlgoStatus.PAUSED}:
             algo.update_trade(trade)
@@ -113,7 +112,7 @@ class AlgoEngine(BaseEngine):
         """处理委托事件"""
         order: OrderData = event.data
 
-        algo: Optional[AlgoTemplate] = self.orderid_algo_map.get(order.vt_orderid, None)
+        algo: AlgoTemplate | None = self.orderid_algo_map.get(order.vt_orderid, None)
 
         if algo and algo.status in {AlgoStatus.RUNNING, AlgoStatus.PAUSED}:
             algo.update_order(order)
@@ -129,7 +128,7 @@ class AlgoEngine(BaseEngine):
         setting: dict
     ) -> str:
         """启动算法"""
-        contract: Optional[ContractData] = self.main_engine.get_contract(vt_symbol)
+        contract: ContractData | None = self.main_engine.get_contract(vt_symbol)
         if not contract:
             self.write_log(f'算法启动失败，找不到合约：{vt_symbol}')
             return ""
@@ -164,19 +163,19 @@ class AlgoEngine(BaseEngine):
 
     def pause_algo(self, algo_name: str) -> None:
         """暂停算法"""
-        algo: Optional[AlgoTemplate] = self.algos.get(algo_name, None)
+        algo: AlgoTemplate | None = self.algos.get(algo_name, None)
         if algo:
             algo.pause()
 
     def resume_algo(self, algo_name: str) -> None:
         """恢复算法"""
-        algo: Optional[AlgoTemplate] = self.algos.get(algo_name, None)
+        algo: AlgoTemplate | None = self.algos.get(algo_name, None)
         if algo:
             algo.resume()
 
     def stop_algo(self, algo_name: str) -> None:
         """停止算法"""
-        algo: Optional[AlgoTemplate] = self.algos.get(algo_name, None)
+        algo: AlgoTemplate | None = self.algos.get(algo_name, None)
         if algo:
             algo.stop()
 
@@ -203,7 +202,7 @@ class AlgoEngine(BaseEngine):
         offset: Offset
     ) -> str:
         """委托下单"""
-        contract: Optional[ContractData] = self.main_engine.get_contract(algo.vt_symbol)
+        contract: ContractData | None = self.main_engine.get_contract(algo.vt_symbol)
         volume: float = round_to(volume, contract.min_volume)
         if not volume:
             return ""
@@ -225,7 +224,7 @@ class AlgoEngine(BaseEngine):
 
     def cancel_order(self, algo: AlgoTemplate, vt_orderid: str) -> None:
         """委托撤单"""
-        order: Optional[OrderData] = self.main_engine.get_order(vt_orderid)
+        order: OrderData | None = self.main_engine.get_order(vt_orderid)
 
         if not order:
             self.write_log(f"委托撤单失败，找不到委托：{vt_orderid}", algo)
@@ -234,18 +233,18 @@ class AlgoEngine(BaseEngine):
         req: CancelRequest = order.create_cancel_request()
         self.main_engine.cancel_order(req, order.gateway_name)
 
-    def get_tick(self, algo: AlgoTemplate) -> Optional[TickData]:
+    def get_tick(self, algo: AlgoTemplate) -> TickData | None:
         """查询行情"""
-        tick: Optional[TickData] = self.main_engine.get_tick(algo.vt_symbol)
+        tick: TickData | None = self.main_engine.get_tick(algo.vt_symbol)
 
         if not tick:
             self.write_log(f"查询行情失败，找不到行情：{algo.vt_symbol}", algo)
 
         return tick
 
-    def get_contract(self, algo: AlgoTemplate) -> Optional[ContractData]:
+    def get_contract(self, algo: AlgoTemplate) -> ContractData | None:
         """查询合约"""
-        contract: Optional[ContractData] = self.main_engine.get_contract(algo.vt_symbol)
+        contract: ContractData | None = self.main_engine.get_contract(algo.vt_symbol)
 
         if not contract:
             self.write_log(f"查询合约失败，找不到合约：{algo.vt_symbol}", algo)

@@ -1,7 +1,6 @@
 import csv
 from functools import partial
 from datetime import datetime
-from typing import Optional
 
 from vnpy.event import EventEngine, Event
 from vnpy.trader.engine import MainEngine, LogData
@@ -65,7 +64,7 @@ class AlgoWidget(QtWidgets.QWidget):
         for field_name, field_value in self.default_setting.items():
             field_type: object = type(field_value)
 
-            if field_type == list:
+            if field_type is list:
                 widget: QtWidgets.QComboBox = QtWidgets.QComboBox()
                 widget.addItems(field_value)
             else:
@@ -97,7 +96,7 @@ class AlgoWidget(QtWidgets.QWidget):
         # 从对话框获取csv地址
         path, type_ = QtWidgets.QFileDialog.getOpenFileName(
             self,
-            u"加载算法配置",
+            "加载算法配置",
             "",
             "CSV(*.csv)"
         )
@@ -106,7 +105,7 @@ class AlgoWidget(QtWidgets.QWidget):
             return
 
         # 创建csv dictReader
-        with open(path, "r") as f:
+        with open(path) as f:
             buf: list = [line for line in f]
             reader: csv.DictReader = csv.DictReader(buf)
 
@@ -131,7 +130,7 @@ class AlgoWidget(QtWidgets.QWidget):
                 field_type: object = tp[-1]
                 field_text: str = d[field_name]
 
-                if field_type == list:
+                if field_type is list:
                     field_value = field_text
                 else:
                     try:
@@ -167,7 +166,7 @@ class AlgoWidget(QtWidgets.QWidget):
 
         for field_name, tp in self.widgets.items():
             widget, field_type = tp
-            if field_type == list:
+            if field_type is list:
                 field_value: str = str(widget.currentText())
             else:
                 try:
@@ -342,7 +341,7 @@ class AlgoMonitor(QtWidgets.QTableWidget):
         volume: float
     ) -> dict[str, QtWidgets.QTableWidgetItem]:
         """获取算法对应的单元格字典"""
-        cells: Optional[dict] = self.algo_cells.get(algo_name, None)
+        cells: dict | None = self.algo_cells.get(algo_name, None)
 
         if not cells:
             stop_func = partial(self.stop_algo, algo_name=algo_name)

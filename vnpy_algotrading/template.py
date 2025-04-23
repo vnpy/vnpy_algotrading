@@ -1,4 +1,4 @@
-from typing import Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 from vnpy.trader.engine import BaseEngine
 from vnpy.trader.object import TickData, OrderData, TradeData, ContractData
@@ -189,11 +189,11 @@ class AlgoTemplate:
         for vt_orderid in self.active_orders.keys():
             self.cancel_order(vt_orderid)
 
-    def get_tick(self) -> Optional[TickData]:
+    def get_tick(self) -> TickData | None:
         """查询行情"""
         return self.algo_engine.get_tick(self)
 
-    def get_contract(self) -> Optional[ContractData]:
+    def get_contract(self) -> ContractData | None:
         """查询合约"""
         return self.algo_engine.get_contract(self)
 

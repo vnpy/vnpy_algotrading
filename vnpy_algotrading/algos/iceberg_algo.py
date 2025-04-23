@@ -98,11 +98,11 @@ class IcebergAlgo(AlgoTemplate):
                 if tick.ask_price_1 <= self.price:
                     self.cancel_order(self.vt_orderid)
                     self.vt_orderid = ""
-                    self.write_log(u"最新Tick卖一价，低于买入委托价格，之前委托可能丢失，强制撤单")
+                    self.write_log("最新Tick卖一价，低于买入委托价格，之前委托可能丢失，强制撤单")
             else:
                 if tick.bid_price_1 >= self.price:
                     self.cancel_order(self.vt_orderid)
                     self.vt_orderid = ""
-                    self.write_log(u"最新Tick买一价，高于卖出委托价格，之前委托可能丢失，强制撤单")
+                    self.write_log("最新Tick买一价，高于卖出委托价格，之前委托可能丢失，强制撤单")
 
         self.put_event()
