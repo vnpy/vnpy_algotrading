@@ -64,7 +64,7 @@ class StopAlgo(AlgoTemplate):
 
         else:
             if tick.last_price <= self.price:
-                price: float = self.price - self.price_add
+                price = self.price - self.price_add
 
                 if tick.limit_down:
                     price = max(price, tick.limit_down)

@@ -68,7 +68,7 @@ class AlgoEngine(BaseEngine):
         self.add_algo_template(StopAlgo)
         self.add_algo_template(BestLimitAlgo)
 
-    def add_algo_template(self, template: AlgoTemplate) -> None:
+    def add_algo_template(self, template: type[AlgoTemplate]) -> None:
         """添加算法类"""
         self.algo_templates[template.__name__] = template
 
@@ -133,7 +133,7 @@ class AlgoEngine(BaseEngine):
             self.write_log(f'算法启动失败，找不到合约：{vt_symbol}')
             return ""
 
-        algo_template: AlgoTemplate = self.algo_templates[template_name]
+        algo_template: type[AlgoTemplate] = self.algo_templates[template_name]
 
         # 创建算法实例
         algo_template._count += 1
@@ -203,7 +203,11 @@ class AlgoEngine(BaseEngine):
     ) -> str:
         """委托下单"""
         contract: ContractData | None = self.main_engine.get_contract(algo.vt_symbol)
-        volume: float = round_to(volume, contract.min_volume)
+        if not contract:
+            self.write_log(f"算法{algo.algo_name}委托下单失败，找不到合约：{algo.vt_symbol}")
+            return ""
+
+        volume = round_to(volume, contract.min_volume)
         if not volume:
             return ""
 
@@ -251,10 +255,10 @@ class AlgoEngine(BaseEngine):
 
         return contract
 
-    def write_log(self, msg: str, algo: AlgoTemplate = None) -> None:
+    def write_log(self, msg: str, algo: AlgoTemplate | None = None) -> None:
         """输出日志"""
         if algo:
-            msg: str = f"{algo.algo_name}：{msg}"
+            msg = f"{algo.algo_name}：{msg}"
 
         log: LogData = LogData(msg=msg, gateway_name=APP_NAME)
         event: Event = Event(EVENT_ALGO_LOG, data=log)
