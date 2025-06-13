@@ -1,7 +1,6 @@
 import csv
 from functools import partial
 from datetime import datetime
-from typing import Optional
 
 from vnpy.event import EventEngine, Event
 from vnpy.trader.engine import MainEngine, LogData
@@ -26,7 +25,7 @@ class AlgoWidget(QtWidgets.QWidget):
     def __init__(
         self,
         algo_engine: AlgoEngine,
-        algo_template: AlgoTemplate
+        algo_template: type[AlgoTemplate]
     ) -> None:
         """构造函数"""
         super().__init__()
@@ -65,11 +64,11 @@ class AlgoWidget(QtWidgets.QWidget):
         for field_name, field_value in self.default_setting.items():
             field_type: object = type(field_value)
 
-            if field_type == list:
-                widget: QtWidgets.QComboBox = QtWidgets.QComboBox()
+            if field_type is list:
+                widget: QtWidgets.QComboBox | QtWidgets.QLineEdit = QtWidgets.QComboBox()
                 widget.addItems(field_value)
             else:
-                widget: QtWidgets.QLineEdit = QtWidgets.QLineEdit()
+                widget = QtWidgets.QLineEdit()
 
             display_name: str = NAME_DISPLAY_MAP.get(field_name, field_name)
 
@@ -97,7 +96,7 @@ class AlgoWidget(QtWidgets.QWidget):
         # 从对话框获取csv地址
         path, type_ = QtWidgets.QFileDialog.getOpenFileName(
             self,
-            u"加载算法配置",
+            "加载算法配置",
             "",
             "CSV(*.csv)"
         )
@@ -106,9 +105,17 @@ class AlgoWidget(QtWidgets.QWidget):
             return
 
         # 创建csv dictReader
-        with open(path, "r") as f:
+        with open(path) as f:
             buf: list = [line for line in f]
             reader: csv.DictReader = csv.DictReader(buf)
+
+        if not reader.fieldnames:
+            QtWidgets.QMessageBox.warning(
+                self,
+                "CSV文件格式错误",
+                "CSV文件为空或格式不正确，无法识别列名。请检查文件是否包含标题行，并确保格式正确。"
+            )
+            return
 
         # 检查csv文件是否有字段缺失
         for field_name in self.widgets.keys():
@@ -128,10 +135,10 @@ class AlgoWidget(QtWidgets.QWidget):
 
             # 读取csv文件每行中各个字段内容
             for field_name, tp in self.widgets.items():
-                field_type: object = tp[-1]
+                _widget, field_type = tp
                 field_text: str = d[field_name]
 
-                if field_type == list:
+                if field_type is list:
                     field_value = field_text
                 else:
                     try:
@@ -167,11 +174,11 @@ class AlgoWidget(QtWidgets.QWidget):
 
         for field_name, tp in self.widgets.items():
             widget, field_type = tp
-            if field_type == list:
+            if field_type is list:
                 field_value: str = str(widget.currentText())
             else:
                 try:
-                    field_value: object = field_type(widget.text())
+                    field_value = field_type(widget.text())
                 except ValueError:
                     display_name: str = NAME_DISPLAY_MAP.get(field_name, field_name)
                     QtWidgets.QMessageBox.warning(
@@ -179,7 +186,7 @@ class AlgoWidget(QtWidgets.QWidget):
                         "参数错误",
                         f"{display_name}参数类型应为{field_type}，请检查！"
                     )
-                    return None
+                    return {}
 
             setting[field_name] = field_value
 
@@ -342,7 +349,7 @@ class AlgoMonitor(QtWidgets.QTableWidget):
         volume: float
     ) -> dict[str, QtWidgets.QTableWidgetItem]:
         """获取算法对应的单元格字典"""
-        cells: Optional[dict] = self.algo_cells.get(algo_name, None)
+        cells: dict | None = self.algo_cells.get(algo_name, None)
 
         if not cells:
             stop_func = partial(self.stop_algo, algo_name=algo_name)
@@ -363,7 +370,7 @@ class AlgoMonitor(QtWidgets.QTableWidget):
             self.setItem(0, 12, parameters_cell)
             self.setItem(0, 13, variables_cell)
 
-            cells: dict[str, QtWidgets.QTableWidgetItem] = {
+            cells = {
                 "parameters": parameters_cell,
                 "variables": variables_cell,
                 "button": switch_button        # 缓存对应algo_name的button进字典便于更新按钮状态
@@ -492,7 +499,7 @@ class AlgoManager(QtWidgets.QWidget):
 
         algo_templates: dict = self.algo_engine.get_algo_template()
         for algo_template in algo_templates.values():
-            widget: AlgoWidget = AlgoWidget(self.algo_engine, algo_template)
+            widget = AlgoWidget(self.algo_engine, algo_template)
             vbox.addWidget(widget)
 
             template_name: str = algo_template.__name__
@@ -555,7 +562,7 @@ def to_text(data: dict) -> str:
     """将字典数据转化为字符串数据"""
     buf: list = []
     for key, value in data.items():
-        key: str = NAME_DISPLAY_MAP.get(key, key)
+        key = NAME_DISPLAY_MAP.get(key, key)
         buf.append(f"{key}:{value}")
     text: str = ";".join(buf)
     return text

@@ -23,16 +23,19 @@
 
 from pathlib import Path
 
-import importlib_metadata
 from vnpy.trader.app import BaseApp
 
 from .engine import AlgoEngine, APP_NAME
 
 
-try:
-    __version__ = importlib_metadata.version("vnpy_algotrading")
-except importlib_metadata.PackageNotFoundError:
-    __version__ = "dev"
+__all__ = [
+    "APP_NAME",
+    "AlgoEngine",
+    "AlgoTradingApp"
+]
+
+
+__version__ = "1.1.0"
 
 
 class AlgoTradingApp(BaseApp):
@@ -42,6 +45,6 @@ class AlgoTradingApp(BaseApp):
     app_module: str = __module__
     app_path: Path = Path(__file__).parent
     display_name: str = "算法交易"
-    engine_class: AlgoEngine = AlgoEngine
+    engine_class: type[AlgoEngine] = AlgoEngine
     widget_name: str = "AlgoManager"
     icon_name: str = str(app_path.joinpath("ui", "algo.ico"))

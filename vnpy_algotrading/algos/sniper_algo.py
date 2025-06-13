@@ -51,7 +51,7 @@ class SniperAlgo(AlgoTemplate):
                 )
         else:
             if tick.bid_price_1 >= self.price:
-                order_volume: float = self.volume - self.traded
+                order_volume = self.volume - self.traded
                 order_volume = min(order_volume, tick.bid_volume_1)
 
                 self.vt_orderid = self.sell(

@@ -1,9 +1,8 @@
-from typing import Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 from vnpy.trader.engine import BaseEngine
 from vnpy.trader.object import TickData, OrderData, TradeData, ContractData
 from vnpy.trader.constant import OrderType, Offset, Direction
-from vnpy.trader.utility import virtual
 
 from .base import AlgoStatus
 
@@ -28,7 +27,7 @@ class AlgoTemplate:
         direction: Direction,
         offset: Offset,
         price: float,
-        volume: int,
+        volume: float,
         setting: dict
     ) -> None:
         """构造函数"""
@@ -39,7 +38,7 @@ class AlgoTemplate:
         self.direction: Direction = direction
         self.offset: Offset = offset
         self.price: float = price
-        self.volume: int = volume
+        self.volume: float = volume
 
         self.status: AlgoStatus = AlgoStatus.PAUSED
         self.traded: float = 0
@@ -74,25 +73,21 @@ class AlgoTemplate:
         if self.status == AlgoStatus.RUNNING:
             self.on_timer()
 
-    @virtual
     def on_tick(self, tick: TickData) -> None:
         """行情回调"""
-        pass
+        return
 
-    @virtual
     def on_order(self, order: OrderData) -> None:
         """委托回调"""
-        pass
+        return
 
-    @virtual
     def on_trade(self, trade: TradeData) -> None:
         """成交回调"""
-        pass
+        return
 
-    @virtual
     def on_timer(self) -> None:
         """定时回调"""
-        pass
+        return
 
     def start(self) -> None:
         """启动"""
@@ -137,15 +132,15 @@ class AlgoTemplate:
         volume: float,
         order_type: OrderType = OrderType.LIMIT,
         offset: Offset = Offset.NONE
-    ) -> None:
+    ) -> str:
         """买入"""
         if self.status != AlgoStatus.RUNNING:
-            return
+            return ""
 
         msg: str = f"{self.vt_symbol}，委托买入{order_type.value}，{volume}@{price}"
         self.write_log(msg)
 
-        return self.algo_engine.send_order(
+        vt_orderid: str = self.algo_engine.send_order(
             self,
             Direction.LONG,
             price,
@@ -154,21 +149,23 @@ class AlgoTemplate:
             offset
         )
 
+        return vt_orderid
+
     def sell(
         self,
         price: float,
         volume: float,
         order_type: OrderType = OrderType.LIMIT,
         offset: Offset = Offset.NONE
-    ) -> None:
+    ) -> str:
         """卖出"""
         if self.status != AlgoStatus.RUNNING:
-            return
+            return ""
 
         msg: str = f"{self.vt_symbol}委托卖出{order_type.value}，{volume}@{price}"
         self.write_log(msg)
 
-        return self.algo_engine.send_order(
+        vt_orderid: str = self.algo_engine.send_order(
             self,
             Direction.SHORT,
             price,
@@ -176,6 +173,8 @@ class AlgoTemplate:
             order_type,
             offset
         )
+
+        return vt_orderid
 
     def cancel_order(self, vt_orderid: str) -> None:
         """撤销委托"""
@@ -189,11 +188,11 @@ class AlgoTemplate:
         for vt_orderid in self.active_orders.keys():
             self.cancel_order(vt_orderid)
 
-    def get_tick(self) -> Optional[TickData]:
+    def get_tick(self) -> TickData | None:
         """查询行情"""
         return self.algo_engine.get_tick(self)
 
-    def get_contract(self) -> Optional[ContractData]:
+    def get_contract(self) -> ContractData | None:
         """查询合约"""
         return self.algo_engine.get_contract(self)
 

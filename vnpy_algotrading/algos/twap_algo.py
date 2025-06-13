@@ -41,7 +41,7 @@ class TwapAlgo(AlgoTemplate):
         self.interval: int = setting["interval"]
 
         # 变量
-        self.order_volume: int = self.volume / (self.time / self.interval)
+        self.order_volume: float = self.volume / (self.time / self.interval)
         contract: ContractData = self.get_contract()
         if contract:
             self.order_volume = round_to(self.order_volume, contract.min_volume)
@@ -80,7 +80,7 @@ class TwapAlgo(AlgoTemplate):
 
         self.cancel_all()
 
-        left_volume: int = self.volume - self.traded
+        left_volume: float = self.volume - self.traded
         order_volume = min(self.order_volume, left_volume)
 
         if self.direction == Direction.LONG:
