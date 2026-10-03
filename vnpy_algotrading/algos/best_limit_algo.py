@@ -1,3 +1,4 @@
+"""最优限价算法。"""
 from random import uniform
 
 from vnpy.trader.constant import Direction

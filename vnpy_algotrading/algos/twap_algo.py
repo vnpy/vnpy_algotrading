@@ -1,3 +1,4 @@
+"""TWAP 时间加权平均算法。"""
 from vnpy.trader.utility import round_to
 from vnpy.trader.constant import Direction
 from vnpy.trader.object import TradeData, TickData, ContractData

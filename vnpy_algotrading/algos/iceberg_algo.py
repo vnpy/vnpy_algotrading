@@ -1,3 +1,4 @@
+"""冰山算法。"""
 from vnpy.trader.constant import Direction
 from vnpy.trader.object import TradeData, OrderData, TickData
 from vnpy.trader.engine import BaseEngine

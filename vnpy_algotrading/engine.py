@@ -1,3 +1,4 @@
+"""算法交易引擎。"""
 from collections import defaultdict
 
 from vnpy.event import EventEngine, Event

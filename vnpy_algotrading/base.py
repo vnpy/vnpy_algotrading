@@ -1,3 +1,4 @@
+"""算法交易的事件名、应用名和状态。"""
 from enum import Enum
 
 

@@ -1,3 +1,4 @@
+"""算法字段名到中文显示名的映射。"""
 NAME_DISPLAY_MAP: dict = {
     "vt_symbol": "本地代码",
     "direction": "方向",

@@ -1,3 +1,4 @@
+"""算法模板。"""
 from typing import TYPE_CHECKING
 
 from vnpy.trader.engine import BaseEngine

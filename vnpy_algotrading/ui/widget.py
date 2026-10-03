@@ -1,3 +1,4 @@
+"""算法交易界面组件。"""
 import csv
 from functools import partial
 from datetime import datetime
@@ -405,7 +406,7 @@ class ActiveAlgoMonitor(AlgoMonitor):
     """活动算法监控组件"""
 
     def __init__(self, algo_engine: AlgoEngine, event_engine: EventEngine) -> None:
-        """"""
+        """以活动算法模式创建监控表。"""
         super().__init__(algo_engine, event_engine, True)
 
 
@@ -413,7 +414,7 @@ class InactiveAlgoMonitor(AlgoMonitor):
     """结束算法监控组件"""
 
     def __init__(self, algo_engine: AlgoEngine, event_engine: EventEngine) -> None:
-        """"""
+        """以已结束算法模式创建监控表。"""
         super().__init__(algo_engine, event_engine, False)
 
 
@@ -469,7 +470,7 @@ class AlgoManager(QtWidgets.QWidget):
     """算法交易管理控件"""
 
     def __init__(self, main_engine: MainEngine, event_engine: EventEngine) -> None:
-        """"""
+        """取得算法引擎并初始化界面。"""
         super().__init__()
 
         self.main_engine: MainEngine = main_engine
@@ -482,7 +483,7 @@ class AlgoManager(QtWidgets.QWidget):
         self.algo_engine.init_engine()
 
     def init_ui(self) -> None:
-        """"""
+        """搭建算法选择、执行监控、日志和全部停止按钮。"""
         self.setWindowTitle("算法交易")
 
         # 左边控制控件
@@ -543,7 +544,7 @@ class AlgoManager(QtWidgets.QWidget):
         self.show_algo_widget()
 
     def show_algo_widget(self) -> None:
-        """"""
+        """只显示当前选中的算法控件。"""
         ix: int = self.template_combo.currentIndex()
         current_name: object = self.template_combo.itemData(ix)
 
@@ -554,7 +555,7 @@ class AlgoManager(QtWidgets.QWidget):
                 widget.hide()
 
     def show(self) -> None:
-        """"""
+        """最大化显示窗口。"""
         self.showMaximized()
 
 

@@ -1,3 +1,4 @@
+"""条件委托算法。"""
 from vnpy.trader.constant import Direction
 from vnpy.trader.object import OrderData, TickData, TradeData
 from vnpy.trader.engine import BaseEngine
