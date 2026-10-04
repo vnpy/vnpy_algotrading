@@ -30,7 +30,7 @@ class SniperAlgo(AlgoTemplate):
         super().__init__(algo_engine, algo_name, vt_symbol, direction, offset, price, volume, setting)
 
         # 变量
-        self.vt_orderid = ""
+        self.vt_orderid: str = ""
 
         self.put_event()
 

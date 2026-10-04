@@ -2,7 +2,7 @@
 import csv
 from functools import partial
 from datetime import datetime
-from typing import cast
+from typing import Any, TextIO, cast
 
 from vnpy.event import EventEngine, Event
 from vnpy.trader.engine import MainEngine, LogData
@@ -63,6 +63,9 @@ class AlgoWidget(QtWidgets.QWidget):
 
         form: QtWidgets.QFormLayout = QtWidgets.QFormLayout()
 
+        # 默认配置经模板更新后值类型不固定，且 list 分支未做 isinstance 收窄。
+        field_name: str
+        field_value: Any
         for field_name, field_value in self.default_setting.items():
             field_type: type = type(field_value)
 
@@ -86,6 +89,7 @@ class AlgoWidget(QtWidgets.QWidget):
         load_csv_button.clicked.connect(self.load_csv)
         form.addRow(load_csv_button)
 
+        button: QtWidgets.QPushButton
         for button in [
             start_algo_button,
             load_csv_button
@@ -97,6 +101,8 @@ class AlgoWidget(QtWidgets.QWidget):
     def load_csv(self) -> None:
         """加载CSV文件中的算法配置"""
         # 从对话框获取csv地址
+        path: str
+        type_: str
         path, type_ = QtWidgets.QFileDialog.getOpenFileName(
             self,
             "加载算法配置",
@@ -108,6 +114,7 @@ class AlgoWidget(QtWidgets.QWidget):
             return
 
         # 创建csv dictReader
+        f: TextIO
         with open(path) as f:
             buf: list = [line for line in f]
             reader: csv.DictReader = csv.DictReader(buf)
@@ -121,6 +128,7 @@ class AlgoWidget(QtWidgets.QWidget):
             return
 
         # 检查csv文件是否有字段缺失
+        field_name: str
         for field_name in self.widgets.keys():
             if field_name not in reader.fieldnames:
                 QtWidgets.QMessageBox.warning(
@@ -132,17 +140,21 @@ class AlgoWidget(QtWidgets.QWidget):
 
         settings: list = []
 
+        d: dict[str, str]
         for d in reader:
             # 用模版名初始化算法配置
             setting: dict = {}
 
             # 读取csv文件每行中各个字段内容
+            tp: tuple[QtWidgets.QComboBox | QtWidgets.QLineEdit, type]
             for field_name, tp in self.widgets.items():
+                _widget: QtWidgets.QComboBox | QtWidgets.QLineEdit
+                field_type: type
                 _widget, field_type = tp
                 field_text: str = d[field_name]
 
                 if field_type is list:
-                    field_value = field_text
+                    field_value: object = field_text
                 else:
                     try:
                         field_value = field_type(field_text)
@@ -175,7 +187,11 @@ class AlgoWidget(QtWidgets.QWidget):
         """获取当前配置"""
         setting: dict = {}
 
+        field_name: str
+        tp: tuple[QtWidgets.QComboBox | QtWidgets.QLineEdit, type]
         for field_name, tp in self.widgets.items():
+            widget: QtWidgets.QComboBox | QtWidgets.QLineEdit
+            field_type: type
             widget, field_type = tp
             if field_type is list:
                 field_value: str = str(cast(QtWidgets.QComboBox, widget).currentText())
@@ -222,7 +238,7 @@ class AlgoMonitor(QtWidgets.QTableWidget):
         algo_engine: AlgoEngine,
         event_engine: EventEngine,
         mode_active: bool
-    ):
+    ) -> None:
         """构造函数"""
         super().__init__()
 
@@ -262,6 +278,7 @@ class AlgoMonitor(QtWidgets.QTableWidget):
             QtWidgets.QHeaderView.ResizeMode.ResizeToContents
         )
 
+        column: int
         for column in range(12, 14):
             self.horizontalHeader().setSectionResizeMode(
                 column,
@@ -355,12 +372,12 @@ class AlgoMonitor(QtWidgets.QTableWidget):
         cells: dict | None = self.algo_cells.get(algo_name, None)
 
         if not cells:
-            stop_func = partial(self.stop_algo, algo_name=algo_name)
+            stop_func: partial[None] = partial(self.stop_algo, algo_name=algo_name)
             stop_button: QtWidgets.QPushButton = QtWidgets.QPushButton("停止")
             stop_button.clicked.connect(stop_func)
 
             # 初始化时先设置暂停按钮
-            switch_func = partial(self.switch, algo_name=algo_name)
+            switch_func: partial[None] = partial(self.switch, algo_name=algo_name)
             switch_button: QtWidgets.QPushButton = QtWidgets.QPushButton("暂停")
             switch_button.clicked.connect(switch_func)
 
@@ -392,6 +409,9 @@ class AlgoMonitor(QtWidgets.QTableWidget):
                 (11, "status", ""),
             ]
 
+            column: int
+            name: str
+            content: str
             for column, name, content in items:
                 cell: QtWidgets.QTableWidgetItem = QtWidgets.QTableWidgetItem(content)
                 cell.setTextAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
@@ -501,6 +521,7 @@ class AlgoManager(QtWidgets.QWidget):
         vbox.addWidget(widget)
 
         algo_templates: dict = self.algo_engine.get_algo_template()
+        algo_template: type[AlgoTemplate]
         for algo_template in algo_templates.values():
             widget = AlgoWidget(self.algo_engine, algo_template)
             vbox.addWidget(widget)
@@ -550,6 +571,8 @@ class AlgoManager(QtWidgets.QWidget):
         ix: int = self.template_combo.currentIndex()
         current_name: object = self.template_combo.itemData(ix)
 
+        template_name: str
+        widget: AlgoWidget
         for template_name, widget in self.algo_widgets.items():
             if template_name == current_name:
                 widget.show()
@@ -564,6 +587,8 @@ class AlgoManager(QtWidgets.QWidget):
 def to_text(data: dict) -> str:
     """将字典数据转化为字符串数据"""
     buf: list = []
+    key: str
+    value: object
     for key, value in data.items():
         key = NAME_DISPLAY_MAP.get(key, key)
         buf.append(f"{key}:{value}")

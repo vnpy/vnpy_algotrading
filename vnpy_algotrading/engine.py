@@ -89,6 +89,7 @@ class AlgoEngine(BaseEngine):
         tick: TickData = event.data
         algos: set[AlgoTemplate] = self.symbol_algo_map[tick.vt_symbol]
 
+        algo: AlgoTemplate
         for algo in algos:
             algo.update_tick(tick)
 
@@ -97,6 +98,7 @@ class AlgoEngine(BaseEngine):
         # 生成列表避免字典改变
         algos: list[AlgoTemplate] = list(self.algos.values())
 
+        algo: AlgoTemplate
         for algo in algos:
             algo.update_timer()
 
@@ -182,6 +184,7 @@ class AlgoEngine(BaseEngine):
 
     def stop_all(self) -> None:
         """停止全部算法"""
+        algo_name: str
         for algo_name in list(self.algos.keys()):
             self.stop_algo(algo_name)
 
@@ -274,6 +277,7 @@ class AlgoEngine(BaseEngine):
         ):
             self.algos.pop(algo.algo_name)
 
+            algos: set[AlgoTemplate]
             for algos in self.symbol_algo_map.values():
                 if algo in algos:
                     algos.remove(algo)

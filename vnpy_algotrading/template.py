@@ -31,7 +31,8 @@ class AlgoTemplate:
         setting: dict
     ) -> None:
         """构造函数"""
-        self.algo_engine: "AlgoEngine" = algo_engine
+        # AlgoEngine 只在 TYPE_CHECKING 下导入，运行时去掉引号会 NameError。
+        self.algo_engine: "AlgoEngine" = algo_engine  # noqa: UP037
         self.algo_name: str = algo_name
 
         self.vt_symbol: str = vt_symbol
@@ -185,6 +186,7 @@ class AlgoTemplate:
         if not self.active_orders:
             return
 
+        vt_orderid: str
         for vt_orderid in self.active_orders.keys():
             self.cancel_order(vt_orderid)
 
@@ -199,6 +201,7 @@ class AlgoTemplate:
     def get_parameters(self) -> dict:
         """获取算法参数"""
         strategy_parameters: dict = {}
+        name: str
         for name in self.default_setting.keys():
             strategy_parameters[name] = getattr(self, name)
         return strategy_parameters
@@ -206,6 +209,7 @@ class AlgoTemplate:
     def get_variables(self) -> dict:
         """获取算法变量"""
         strategy_variables: dict = {}
+        name: str
         for name in self.variables:
             strategy_variables[name] = getattr(self, name)
         return strategy_variables

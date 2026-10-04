@@ -82,7 +82,7 @@ class TwapAlgo(AlgoTemplate):
         self.cancel_all()
 
         left_volume: float = self.volume - self.traded
-        order_volume = min(self.order_volume, left_volume)
+        order_volume: float = min(self.order_volume, left_volume)
 
         if self.direction == Direction.LONG:
             if tick.ask_price_1 <= self.price:

@@ -2,11 +2,11 @@
 from enum import Enum
 
 
-EVENT_ALGO_LOG = "eAlgoLog"
-EVENT_ALGO_UPDATE = "eAlgoUpdate"
+EVENT_ALGO_LOG: str = "eAlgoLog"
+EVENT_ALGO_UPDATE: str = "eAlgoUpdate"
 
 
-APP_NAME = "AlgoTrading"
+APP_NAME: str = "AlgoTrading"
 
 
 class AlgoStatus(Enum):
