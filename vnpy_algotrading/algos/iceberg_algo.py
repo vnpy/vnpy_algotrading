@@ -1,8 +1,8 @@
 """冰山算法。"""
-from vnpy.trader.constant import Direction
+from vnpy.trader.constant import Direction, Offset
 from vnpy.trader.object import TradeData, OrderData, TickData
-from vnpy.trader.engine import BaseEngine
 
+from ..engine import AlgoEngine
 from ..template import AlgoTemplate
 
 
@@ -23,11 +23,11 @@ class IcebergAlgo(AlgoTemplate):
 
     def __init__(
         self,
-        algo_engine: BaseEngine,
+        algo_engine: AlgoEngine,
         algo_name: str,
         vt_symbol: str,
-        direction: str,
-        offset: str,
+        direction: Direction,
+        offset: Offset,
         price: float,
         volume: float,
         setting: dict
@@ -72,7 +72,7 @@ class IcebergAlgo(AlgoTemplate):
 
         self.timer_count = 0
 
-        tick: TickData = self.get_tick()
+        tick: TickData | None = self.get_tick()
         if not tick:
             return
 

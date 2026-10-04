@@ -2,6 +2,7 @@
 import csv
 from functools import partial
 from datetime import datetime
+from typing import cast
 
 from vnpy.event import EventEngine, Event
 from vnpy.trader.engine import MainEngine, LogData
@@ -52,7 +53,7 @@ class AlgoWidget(QtWidgets.QWidget):
         }
         self.default_setting.update(algo_template.default_setting)
 
-        self.widgets: dict[str, QtWidgets.QWidget] = {}
+        self.widgets: dict[str, tuple[QtWidgets.QComboBox | QtWidgets.QLineEdit, type]] = {}
 
         self.init_ui()
 
@@ -63,18 +64,19 @@ class AlgoWidget(QtWidgets.QWidget):
         form: QtWidgets.QFormLayout = QtWidgets.QFormLayout()
 
         for field_name, field_value in self.default_setting.items():
-            field_type: object = type(field_value)
+            field_type: type = type(field_value)
 
             if field_type is list:
-                widget: QtWidgets.QComboBox | QtWidgets.QLineEdit = QtWidgets.QComboBox()
-                widget.addItems(field_value)
+                combo: QtWidgets.QComboBox = QtWidgets.QComboBox()
+                combo.addItems(field_value)
+                editor: QtWidgets.QComboBox | QtWidgets.QLineEdit = combo
             else:
-                widget = QtWidgets.QLineEdit()
+                editor = QtWidgets.QLineEdit()
 
             display_name: str = NAME_DISPLAY_MAP.get(field_name, field_name)
 
-            form.addRow(display_name, widget)
-            self.widgets[field_name] = (widget, field_type)
+            form.addRow(display_name, editor)
+            self.widgets[field_name] = (editor, field_type)
 
         start_algo_button: QtWidgets.QPushButton = QtWidgets.QPushButton("启动算法")
         start_algo_button.clicked.connect(self.start_algo)
@@ -176,10 +178,10 @@ class AlgoWidget(QtWidgets.QWidget):
         for field_name, tp in self.widgets.items():
             widget, field_type = tp
             if field_type is list:
-                field_value: str = str(widget.currentText())
+                field_value: str = str(cast(QtWidgets.QComboBox, widget).currentText())
             else:
                 try:
-                    field_value = field_type(widget.text())
+                    field_value = field_type(cast(QtWidgets.QLineEdit, widget).text())
                 except ValueError:
                     display_name: str = NAME_DISPLAY_MAP.get(field_name, field_name)
                     QtWidgets.QMessageBox.warning(
@@ -475,7 +477,7 @@ class AlgoManager(QtWidgets.QWidget):
 
         self.main_engine: MainEngine = main_engine
         self.event_engine: EventEngine = event_engine
-        self.algo_engine: AlgoEngine = main_engine.get_engine(APP_NAME)
+        self.algo_engine: AlgoEngine = cast(AlgoEngine, main_engine.get_engine(APP_NAME))
 
         self.algo_widgets: dict[str, AlgoWidget] = {}
 

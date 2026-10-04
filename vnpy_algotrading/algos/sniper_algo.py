@@ -1,8 +1,8 @@
 """狙击手算法。"""
-from vnpy.trader.constant import Direction
+from vnpy.trader.constant import Direction, Offset
 from vnpy.trader.object import TradeData, OrderData, TickData
-from vnpy.trader.engine import BaseEngine
 
+from ..engine import AlgoEngine
 from ..template import AlgoTemplate
 
 
@@ -17,11 +17,11 @@ class SniperAlgo(AlgoTemplate):
 
     def __init__(
         self,
-        algo_engine: BaseEngine,
+        algo_engine: AlgoEngine,
         algo_name: str,
         vt_symbol: str,
-        direction: str,
-        offset: str,
+        direction: Direction,
+        offset: Offset,
         price: float,
         volume: float,
         setting: dict

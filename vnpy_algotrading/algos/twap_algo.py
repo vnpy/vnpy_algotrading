@@ -1,9 +1,9 @@
 """TWAP 时间加权平均算法。"""
 from vnpy.trader.utility import round_to
-from vnpy.trader.constant import Direction
+from vnpy.trader.constant import Direction, Offset
 from vnpy.trader.object import TradeData, TickData, ContractData
-from vnpy.trader.engine import BaseEngine
 
+from ..engine import AlgoEngine
 from ..template import AlgoTemplate
 
 
@@ -25,11 +25,11 @@ class TwapAlgo(AlgoTemplate):
 
     def __init__(
         self,
-        algo_engine: BaseEngine,
+        algo_engine: AlgoEngine,
         algo_name: str,
         vt_symbol: str,
-        direction: str,
-        offset: str,
+        direction: Direction,
+        offset: Offset,
         price: float,
         volume: float,
         setting: dict
@@ -43,7 +43,7 @@ class TwapAlgo(AlgoTemplate):
 
         # 变量
         self.order_volume: float = self.volume / (self.time / self.interval)
-        contract: ContractData = self.get_contract()
+        contract: ContractData | None = self.get_contract()
         if contract:
             self.order_volume = round_to(self.order_volume, contract.min_volume)
 
@@ -75,7 +75,7 @@ class TwapAlgo(AlgoTemplate):
             return
         self.timer_count = 0
 
-        tick: TickData = self.get_tick()
+        tick: TickData | None = self.get_tick()
         if not tick:
             return
 

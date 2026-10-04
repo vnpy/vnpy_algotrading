@@ -1,8 +1,8 @@
 """条件委托算法。"""
-from vnpy.trader.constant import Direction
+from vnpy.trader.constant import Direction, Offset, Status
 from vnpy.trader.object import OrderData, TickData, TradeData
-from vnpy.trader.engine import BaseEngine
 
+from ..engine import AlgoEngine
 from ..template import AlgoTemplate
 
 
@@ -22,11 +22,11 @@ class StopAlgo(AlgoTemplate):
 
     def __init__(
         self,
-        algo_engine: BaseEngine,
+        algo_engine: AlgoEngine,
         algo_name: str,
         vt_symbol: str,
-        direction: str,
-        offset: str,
+        direction: Direction,
+        offset: Offset,
         price: float,
         volume: float,
         setting: dict
@@ -39,7 +39,7 @@ class StopAlgo(AlgoTemplate):
 
         # 变量
         self.vt_orderid: str = ""
-        self.order_status: str = ""
+        self.order_status: str | Status = ""
 
         self.put_event()
 

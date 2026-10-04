@@ -1,7 +1,6 @@
 """算法模板。"""
 from typing import TYPE_CHECKING
 
-from vnpy.trader.engine import BaseEngine
 from vnpy.trader.object import TickData, OrderData, TradeData, ContractData
 from vnpy.trader.constant import OrderType, Offset, Direction
 
@@ -32,7 +31,7 @@ class AlgoTemplate:
         setting: dict
     ) -> None:
         """构造函数"""
-        self.algo_engine: BaseEngine = algo_engine
+        self.algo_engine: "AlgoEngine" = algo_engine
         self.algo_name: str = algo_name
 
         self.vt_symbol: str = vt_symbol
