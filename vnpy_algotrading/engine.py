@@ -87,7 +87,8 @@ class AlgoEngine(BaseEngine):
     def process_tick_event(self, event: Event) -> None:
         """处理行情事件"""
         tick: TickData = event.data
-        algos: set[AlgoTemplate] = self.symbol_algo_map[tick.vt_symbol]
+        # 生成列表避免字典改变
+        algos: set[AlgoTemplate] = list(self.symbol_algo_map[tick.vt_symbol])
 
         algo: AlgoTemplate
         for algo in algos:
