@@ -5,6 +5,7 @@ from vnpy.trader.object import TickData, OrderData, TradeData, ContractData
 from vnpy.trader.constant import OrderType, Offset, Direction
 
 from .base import AlgoStatus
+from threading import Lock
 
 if TYPE_CHECKING:
     from .engine import AlgoEngine
@@ -46,11 +47,18 @@ class AlgoTemplate:
         self.traded_price: float = 0
 
         self.active_orders: dict[str, OrderData] = {}  # vt_orderid:order
+        self._lock = Lock()
 
     def update_tick(self, tick: TickData) -> None:
         """行情数据更新"""
         if self.status == AlgoStatus.RUNNING:
-            self.on_tick(tick)
+            # blocking=False：锁被占用时立刻返回 False，直接丢弃本次 tick
+            if not self._lock.acquire(blocking=False):
+                return
+            try:
+                self.on_tick(tick)
+            finally:
+                self._lock.release()
 
     def update_order(self, order: OrderData) -> None:
         """委托数据更新"""
